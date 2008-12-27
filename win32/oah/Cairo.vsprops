@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Cairo"
+	InheritedPropertySheets="$(OAH_INSTALLED_PATH)\vsprops\oah-PC.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="$(IntDir);..\..\src"
+		PreprocessorDefinitions="CAIRO_EXPORTS;HAVE_CONFIG_H"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="msimg32.lib"
+		OutputFile="$(OutDir)\bin\$(ProjectName).dll"
+		ImportLibrary="$(OutDir)\lib\$(TargetName).lib"
+	/>
+	<UserMacro
+		Name="CairoMajorVersion"
+		Value="1"
+	/>
+	<UserMacro
+		Name="CairoMinorVersion"
+		Value="8"
+	/>
+	<UserMacro
+		Name="CairoMicroVersion"
+		Value="2"
+	/>
+	<UserMacro
+		Name="CairoVersion"
+		Value="$(CairoMajorVersion).$(CairoMinorVersion).$(CairoMicroVersion)"
+	/>
+</VisualStudioPropertySheet>
