@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Module Id="cairodev" Version="@VERSION@.0" Language="1033">
+		<Package Id="{ACFFEE77-AD9A-41a9-9076-DC27FE99BFB3}"
+				Description="Development package without source code, but includes: headers, import libraries, binaries and pkg-config files"
+				Manufacturer="Free Software Community" InstallerVersion="300" />
+
+		<Dependency RequiredId="cairo.58FDA889_3D12_4315_BFAA_B26F09A36AF2" RequiredLanguage="0" RequiredVersion="@VERSION@" />
+
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="MODULE_DIR" Name=".">
+				<Directory Id="ModuleInclude" Name="include">
+					<Directory Id="CairoInclude" Name="cairo">
+						<Component Id="includes" Guid="{F34AF1A5-A40A-4e6c-A983-D4AC27688419}">
+							%(include_files)s
+						</Component>
+					</Directory>
+				</Directory>
+
+				<Directory Id="ModuleLib" Name="lib">
+					<Component Id="libs" Guid="{A7EDEBF4-8CB2-42d0-A757-2178912894AD}">
+						%(lib_files)s
+					</Component>
+
+					<Directory Id="LibPkgConfig" Name="pkgconfig">
+						<Component Id="pcs" Guid="{75D7FCF5-4A27-4d07-96F7-28C122EB09AA}">
+							%(pc_files)s
+						</Component>
+					</Directory>
+				</Directory>
+
+				<Directory Id="ModuleRedist" Name="redist">
+					<Component Id="msms" Guid="{62E43230-F401-4bfc-BEE6-A6A214AD3318}">
+						<File Id="cairo.msm" Source="Win32\cairo.msm" />
+					</Component>
+				</Directory>
+			</Directory>
+		</Directory>
+	</Module>
+</Wix>

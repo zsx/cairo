@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" UpgradeCode="{8F593707-19FA-4fd4-B2F4-83488E9D8947}" Version="@VERSION@.0" Language="1033" Name="Cairo" Manufacturer="Free Software">
+		<Package InstallerVersion="300" Compressed="yes" InstallScope="perMachine"
+				Description="Cairo for the OAH Build System"
+				Manufacturer="Free Software" />
+		<Media Id="1" Cabinet="cairo_dev_installer.cab" EmbedCab="yes" />
+
+		<Property Id="OAH_BUILD_PRODUCT_DIR">
+			<RegistrySearch Id="OAHBuildProductDir"
+							Root="HKLM" Key="SOFTWARE\OAH Build" Name="ProductDir"
+							Type="raw" />
+		</Property>
+
+		<Property Id="FOSS_PRODUCT_DIR">
+			<RegistrySearch Id="FOSSProductDir"
+							Root="HKLM" Key="SOFTWARE\Free Software" Name="ProductDir"
+							Type="raw" />
+		</Property>
+
+		<Condition Message="OAH Build was not found. You need to install OAH Build before installing [ProductName].">
+			<![CDATA[Installed OR OAH_BUILD_PRODUCT_DIR]]>
+		</Condition>
+
+		<Condition Message="OAH Build was found, but where to install FOSS components is unknown. You need to reinstall OAH Build before installing [ProductName].">
+			<![CDATA[Installed OR FOSS_PRODUCT_DIR]]>
+		</Condition>
+
+		<!-- Directory structure -->
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="FOSS_PRODUCT_DIR">
+				<Directory Id="FossBinDir" Name="bin">
+					<Merge Id='Cairo' Language='1033' SourceFile='Win32\cairo.msm' DiskId='1' />
+				</Directory>
+
+				<Merge Id='CairoDev' Language='1033' SourceFile='Win32\cairo-dev.msm' DiskId='1' />
+
+				<Directory Id="ModuleRedist" Name="redist">
+					<Component Id="CairoDevRedist" Guid="{B1BB748A-3543-4bab-8FFF-AEE3EB4FD59B}">
+						<File Id="cairo_dev.msm" Source="Win32\cairo-dev.msm" />
+					</Component>
+				</Directory>
+			</Directory>
+		</Directory>
+
+		<Feature Id="Binaries" Title="Cairo Binaries" Level="1">
+			<MergeRef Id='Cairo' />
+		</Feature>
+
+		<Feature Id="CairoDev" Title="Cairo .h, .lib, .pc and redist files" Level="1">
+			<MergeRef Id='CairoDev' />
+			<ComponentRef Id="CairoDevRedist" />
+		</Feature>
+	</Product>
+</Wix>

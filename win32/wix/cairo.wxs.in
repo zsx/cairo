@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Module Id='cairo' Version='@VERSION@.0' Language="1033">
+		<Package Id="{58FDA889-3D12-4315-BFAA-B26F09A36AF2}"
+				Description="2D graphics library with support for multiple output devices."
+				Manufacturer="Free Software Community" InstallerVersion="300" />
+
+		<Directory Id='TARGETDIR' Name='SourceDir'>
+			<Directory Id='MODULE_DIR' Name='.'>
+				<Component Id="libcairo" Guid="{C60347AF-6C15-47a5-9A7C-2714702348E1}">
+					<File Id="libcairo.dll" Source="..\oah\Win32\Release\bin\libcairo.dll" />
+				</Component>
+			</Directory>
+		</Directory>
+	</Module>
+</Wix>
