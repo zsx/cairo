@@ -64,8 +64,12 @@ static cairo_status_t
 _cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t      *gstate,
                                            const cairo_glyph_t *glyphs,
                                            int                  num_glyphs,
+					   const cairo_text_cluster_t	*clusters,
+					   int			 num_clusters,
+					   cairo_text_cluster_flags_t cluster_flags,
                                            cairo_glyph_t       *transformed_glyphs,
-					   int		       *num_transformed_glyphs);
+					   int			*num_transformed_glyphs,
+					   cairo_text_cluster_t *transformed_clusters);
 
 cairo_status_t
 _cairo_gstate_init (cairo_gstate_t  *gstate,
@@ -785,12 +789,25 @@ _cairo_gstate_path_extents (cairo_gstate_t     *gstate,
 			    double *x2, double *y2)
 {
     cairo_status_t status;
+    double px1, py1, px2, py2;
 
-    status = _cairo_path_fixed_bounds (path, x1, y1, x2, y2, gstate->tolerance);
+    status = _cairo_path_fixed_bounds (path,
+				       &px1, &py1, &px2, &py2,
+				       gstate->tolerance);
     if (status)
 	return status;
 
-    _cairo_gstate_backend_to_user_rectangle (gstate, x1, y1, x2, y2, NULL);
+    _cairo_gstate_backend_to_user_rectangle (gstate,
+					     &px1, &py1, &px2, &py2,
+					     NULL);
+    if (x1)
+	*x1 = px1;
+    if (y1)
+	*y1 = py1;
+    if (x2)
+	*x2 = px2;
+    if (y2)
+	*y2 = py2;
 
     return CAIRO_STATUS_SUCCESS;
 }
@@ -1083,18 +1100,26 @@ _cairo_gstate_traps_extents_to_user_rectangle (cairo_gstate_t	  *gstate,
 	if (y2)
 	    *y2 = 0.0;
     } else {
+	double px1, py1, px2, py2;
+
 	_cairo_traps_extents (traps, &extents);
 
-	if (x1)
-	    *x1 = _cairo_fixed_to_double (extents.p1.x);
-	if (y1)
-	    *y1 = _cairo_fixed_to_double (extents.p1.y);
-	if (x2)
-	    *x2 = _cairo_fixed_to_double (extents.p2.x);
-	if (y2)
-	    *y2 = _cairo_fixed_to_double (extents.p2.y);
+	px1 = _cairo_fixed_to_double (extents.p1.x);
+	py1 = _cairo_fixed_to_double (extents.p1.y);
+	px2 = _cairo_fixed_to_double (extents.p2.x);
+	py2 = _cairo_fixed_to_double (extents.p2.y);
 
-        _cairo_gstate_backend_to_user_rectangle (gstate, x1, y1, x2, y2, NULL);
+        _cairo_gstate_backend_to_user_rectangle (gstate,
+						 &px1, &py1, &px2, &py2,
+						 NULL);
+	if (x1)
+	    *x1 = px1;
+	if (y1)
+	    *y1 = py1;
+	if (x2)
+	    *x2 = px2;
+	if (y2)
+	    *y2 = py2;
     }
 }
 
@@ -1128,7 +1153,8 @@ _cairo_gstate_stroke_extents (cairo_gstate_t	 *gstate,
 						gstate->tolerance,
 						&traps);
     if (status == CAIRO_STATUS_SUCCESS) {
-        _cairo_gstate_traps_extents_to_user_rectangle(gstate, &traps, x1, y1, x2, y2);
+	_cairo_gstate_traps_extents_to_user_rectangle (gstate, &traps,
+						       x1, y1, x2, y2);
     }
 
     _cairo_traps_fini (&traps);
@@ -1152,7 +1178,8 @@ _cairo_gstate_fill_extents (cairo_gstate_t     *gstate,
 					      gstate->tolerance,
 					      &traps);
     if (status == CAIRO_STATUS_SUCCESS) {
-        _cairo_gstate_traps_extents_to_user_rectangle(gstate, &traps, x1, y1, x2, y2);
+	_cairo_gstate_traps_extents_to_user_rectangle (gstate, &traps,
+						       x1, y1, x2, y2);
     }
 
     _cairo_traps_fini (&traps);
@@ -1195,26 +1222,34 @@ cairo_status_t
 _cairo_gstate_clip_extents (cairo_gstate_t *gstate,
 		            double         *x1,
 		            double         *y1,
-        		    double         *x2,
-        		    double         *y2)
+			    double         *x2,
+			    double         *y2)
 {
     cairo_rectangle_int_t extents;
+    double px1, py1, px2, py2;
     cairo_status_t status;
-    
+
     status = _cairo_gstate_int_clip_extents (gstate, &extents);
     if (status)
         return status;
 
-    if (x1)
-	*x1 = extents.x;
-    if (y1)
-	*y1 = extents.y;
-    if (x2)
-	*x2 = extents.x + extents.width;
-    if (y2)
-	*y2 = extents.y + extents.height;
+    px1 = extents.x;
+    py1 = extents.y;
+    px2 = extents.x + (int) extents.width;
+    py2 = extents.y + (int) extents.height;
 
-    _cairo_gstate_backend_to_user_rectangle (gstate, x1, y1, x2, y2, NULL);
+    _cairo_gstate_backend_to_user_rectangle (gstate,
+					     &px1, &py1, &px2, &py2,
+					     NULL);
+
+    if (x1)
+	*x1 = px1;
+    if (y1)
+	*y1 = py1;
+    if (x2)
+	*x2 = px2;
+    if (y2)
+	*y2 = py2;
 
     return CAIRO_STATUS_SUCCESS;
 }
@@ -1550,10 +1585,12 @@ _cairo_gstate_show_text_glyphs (cairo_gstate_t		   *gstate,
 				int			    num_clusters,
 				cairo_text_cluster_flags_t  cluster_flags)
 {
-    cairo_status_t status;
     cairo_pattern_union_t source_pattern;
-    cairo_glyph_t *transformed_glyphs;
     cairo_glyph_t stack_transformed_glyphs[CAIRO_STACK_ARRAY_LENGTH (cairo_glyph_t)];
+    cairo_glyph_t *transformed_glyphs;
+    cairo_text_cluster_t stack_transformed_clusters[CAIRO_STACK_ARRAY_LENGTH (cairo_text_cluster_t)];
+    cairo_text_cluster_t *transformed_clusters;
+    cairo_status_t status;
 
     if (gstate->source->status)
 	return gstate->source->status;
@@ -1566,18 +1603,37 @@ _cairo_gstate_show_text_glyphs (cairo_gstate_t		   *gstate,
     if (status)
 	return status;
 
-    if (num_glyphs <= ARRAY_LENGTH (stack_transformed_glyphs)) {
-	transformed_glyphs = stack_transformed_glyphs;
-    } else {
+    transformed_glyphs = stack_transformed_glyphs;
+    transformed_clusters = stack_transformed_clusters;
+
+    if (num_glyphs > ARRAY_LENGTH (stack_transformed_glyphs)) {
 	transformed_glyphs = cairo_glyph_allocate (num_glyphs);
-	if (transformed_glyphs == NULL)
-	    return _cairo_error (CAIRO_STATUS_NO_MEMORY);
+	if (transformed_glyphs == NULL) {
+	    status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
+	    goto CLEANUP_GLYPHS;
+	}
+    }
+
+    /* Just in case */
+    if (!clusters)
+	num_clusters = 0;
+
+    if (num_clusters > ARRAY_LENGTH (stack_transformed_clusters)) {
+	transformed_clusters = cairo_text_cluster_allocate (num_clusters);
+	if (transformed_clusters == NULL) {
+	    status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
+	    goto CLEANUP_GLYPHS;
+	}
     }
 
     status = _cairo_gstate_transform_glyphs_to_backend (gstate,
 							glyphs, num_glyphs,
+							clusters,
+							num_clusters,
+							cluster_flags,
 							transformed_glyphs,
-							&num_glyphs);
+							&num_glyphs,
+							transformed_clusters);
 
     if (status || num_glyphs == 0)
 	goto CLEANUP_GLYPHS;
@@ -1585,10 +1641,6 @@ _cairo_gstate_show_text_glyphs (cairo_gstate_t		   *gstate,
     status = _cairo_gstate_copy_transformed_source (gstate, &source_pattern.base);
     if (status)
 	goto CLEANUP_GLYPHS;
-
-    /* Just in case */
-    if (!clusters)
-	num_clusters = 0;
 
     /* For really huge font sizes, we can just do path;fill instead of
      * show_glyphs, as show_glyphs would put excess pressure on the cache,
@@ -1607,7 +1659,7 @@ _cairo_gstate_show_text_glyphs (cairo_gstate_t		   *gstate,
 						  &source_pattern.base,
 						  utf8, utf8_len,
 						  transformed_glyphs, num_glyphs,
-						  clusters, num_clusters,
+						  transformed_clusters, num_clusters,
 						  cluster_flags,
 						  gstate->scaled_font);
     } else {
@@ -1636,6 +1688,8 @@ _cairo_gstate_show_text_glyphs (cairo_gstate_t		   *gstate,
 CLEANUP_GLYPHS:
     if (transformed_glyphs != stack_transformed_glyphs)
       cairo_glyph_free (transformed_glyphs);
+    if (transformed_clusters != stack_transformed_clusters)
+      cairo_text_cluster_free (transformed_clusters);
 
     return status;
 }
@@ -1663,8 +1717,9 @@ _cairo_gstate_glyph_path (cairo_gstate_t      *gstate,
 
     status = _cairo_gstate_transform_glyphs_to_backend (gstate,
 							glyphs, num_glyphs,
+							NULL, 0, 0,
 							transformed_glyphs,
-							NULL);
+							NULL, NULL);
     if (status)
 	goto CLEANUP_GLYPHS;
 
@@ -1713,13 +1768,17 @@ _cairo_gstate_get_antialias (cairo_gstate_t *gstate)
  * cull/drop glyphs that will not be visible.
  **/
 static cairo_status_t
-_cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t      *gstate,
-                                           const cairo_glyph_t *glyphs,
-                                           int                  num_glyphs,
-                                           cairo_glyph_t       *transformed_glyphs,
-					   int		       *num_transformed_glyphs)
+_cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t	*gstate,
+                                           const cairo_glyph_t	*glyphs,
+                                           int			 num_glyphs,
+					   const cairo_text_cluster_t	*clusters,
+					   int			 num_clusters,
+					   cairo_text_cluster_flags_t cluster_flags,
+                                           cairo_glyph_t	*transformed_glyphs,
+					   int			*num_transformed_glyphs,
+					   cairo_text_cluster_t *transformed_clusters)
 {
-    int i, j;
+    int i, j, k;
     cairo_matrix_t *ctm = &gstate->ctm;
     cairo_matrix_t *font_matrix = &gstate->font_matrix;
     cairo_matrix_t *device_transform = &gstate->target->device_transform;
@@ -1754,8 +1813,8 @@ _cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t      *gstate,
 	     */
 	    x1 = surface_extents.x - 2*scale;
 	    y1 = surface_extents.y - 2*scale;
-	    x2 = surface_extents.x + surface_extents.width  + scale;
-	    y2 = surface_extents.y + surface_extents.height + scale;
+	    x2 = surface_extents.x + (int) surface_extents.width  + scale;
+	    y2 = surface_extents.y + (int) surface_extents.height + scale;
 	}
 
 	if (!drop)
@@ -1765,22 +1824,52 @@ _cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t      *gstate,
 
 #define KEEP_GLYPH(glyph) (x1 <= glyph.x && glyph.x <= x2 && y1 <= glyph.y && glyph.y <= y2)
 
+    j = 0;
     if (_cairo_matrix_is_identity (ctm) &&
         _cairo_matrix_is_identity (device_transform) &&
 	font_matrix->x0 == 0 && font_matrix->y0 == 0)
     {
-	if (!drop)
-	    memcpy (transformed_glyphs, glyphs, num_glyphs * sizeof (cairo_glyph_t));
-	else {
-	    for (j = 0, i = 0; i < num_glyphs; i++)
-	    {
+	if (! drop) {
+	    memcpy (transformed_glyphs, glyphs,
+		    num_glyphs * sizeof (cairo_glyph_t));
+	} else if (num_clusters == 0) {
+	    for (i = 0; i < num_glyphs; i++) {
 		transformed_glyphs[j].index = glyphs[i].index;
 		transformed_glyphs[j].x = glyphs[i].x;
 		transformed_glyphs[j].y = glyphs[i].y;
 		if (KEEP_GLYPH (transformed_glyphs[j]))
 		    j++;
 	    }
-	    *num_transformed_glyphs = j;
+	} else {
+	    const cairo_glyph_t *cur_glyph;
+
+	    if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
+		cur_glyph = glyphs + num_glyphs - 1;
+	    else
+		cur_glyph = glyphs;
+
+	    for (i = 0; i < num_clusters; i++) {
+		cairo_bool_t cluster_visible = FALSE;
+
+		for (k = 0; k < clusters[i].num_glyphs; k++) {
+		    transformed_glyphs[j+k].index = cur_glyph->index;
+		    transformed_glyphs[j+k].x = cur_glyph->x;
+		    transformed_glyphs[j+k].y = cur_glyph->y;
+		    if (KEEP_GLYPH (transformed_glyphs[j+k]))
+			cluster_visible = TRUE;
+
+		    if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
+			cur_glyph--;
+		    else
+			cur_glyph++;
+		}
+
+		transformed_clusters[i] = clusters[i];
+		if (cluster_visible)
+		    j += k;
+		else
+		    transformed_clusters[i].num_glyphs = 0;
+	    }
 	}
     }
     else if (_cairo_matrix_is_translation (ctm) &&
@@ -1789,15 +1878,45 @@ _cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t      *gstate,
         double tx = font_matrix->x0 + ctm->x0 + device_transform->x0;
         double ty = font_matrix->y0 + ctm->y0 + device_transform->y0;
 
-        for (j = 0, i = 0; i < num_glyphs; i++)
-        {
-            transformed_glyphs[j].index = glyphs[i].index;
-            transformed_glyphs[j].x = glyphs[i].x + tx;
-            transformed_glyphs[j].y = glyphs[i].y + ty;
-	    if (!drop || KEEP_GLYPH (transformed_glyphs[j]))
-		j++;
-        }
-	*num_transformed_glyphs = j;
+	if (! drop || num_clusters == 0) {
+	    for (i = 0; i < num_glyphs; i++) {
+		transformed_glyphs[j].index = glyphs[i].index;
+		transformed_glyphs[j].x = glyphs[i].x + tx;
+		transformed_glyphs[j].y = glyphs[i].y + ty;
+		if (!drop || KEEP_GLYPH (transformed_glyphs[j]))
+		    j++;
+	    }
+	} else {
+	    const cairo_glyph_t *cur_glyph;
+
+	    if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
+		cur_glyph = glyphs + num_glyphs - 1;
+	    else
+		cur_glyph = glyphs;
+
+	    for (i = 0; i < num_clusters; i++) {
+		cairo_bool_t cluster_visible = FALSE;
+
+		for (k = 0; k < clusters[i].num_glyphs; k++) {
+		    transformed_glyphs[j+k].index = cur_glyph->index;
+		    transformed_glyphs[j+k].x = cur_glyph->x + tx;
+		    transformed_glyphs[j+k].y = cur_glyph->y + ty;
+		    if (KEEP_GLYPH (transformed_glyphs[j+k]))
+			cluster_visible = TRUE;
+
+		    if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
+			cur_glyph--;
+		    else
+			cur_glyph++;
+		}
+
+		transformed_clusters[i] = clusters[i];
+		if (cluster_visible)
+		    j += k;
+		else
+		    transformed_clusters[i].num_glyphs = 0;
+	    }
+	}
     }
     else
     {
@@ -1811,16 +1930,57 @@ _cairo_gstate_transform_glyphs_to_backend (cairo_gstate_t      *gstate,
         cairo_matrix_multiply (&aggregate_transform,
                                &aggregate_transform, device_transform);
 
-        for (j = 0, i = 0; i < num_glyphs; i++)
-        {
-            transformed_glyphs[j] = glyphs[i];
-            cairo_matrix_transform_point (&aggregate_transform,
-                                          &transformed_glyphs[j].x,
-                                          &transformed_glyphs[j].y);
-	    if (!drop || KEEP_GLYPH (transformed_glyphs[j]))
-		j++;
-        }
-	*num_transformed_glyphs = j;
+	if (! drop || num_clusters == 0) {
+	    for (i = 0; i < num_glyphs; i++) {
+		transformed_glyphs[j] = glyphs[i];
+		cairo_matrix_transform_point (&aggregate_transform,
+					      &transformed_glyphs[j].x,
+					      &transformed_glyphs[j].y);
+		if (! drop || KEEP_GLYPH (transformed_glyphs[j]))
+		    j++;
+	    }
+	} else {
+	    const cairo_glyph_t *cur_glyph;
+
+	    if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
+		cur_glyph = glyphs + num_glyphs - 1;
+	    else
+		cur_glyph = glyphs;
+
+	    for (i = 0; i < num_clusters; i++) {
+		cairo_bool_t cluster_visible = FALSE;
+		for (k = 0; k < clusters[i].num_glyphs; k++) {
+		    transformed_glyphs[j+k] = *cur_glyph;
+		    cairo_matrix_transform_point (&aggregate_transform,
+						  &transformed_glyphs[j+k].x,
+						  &transformed_glyphs[j+k].y);
+		    if (KEEP_GLYPH (transformed_glyphs[j+k]))
+			cluster_visible = TRUE;
+
+		    if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
+			cur_glyph--;
+		    else
+			cur_glyph++;
+		}
+
+		transformed_clusters[i] = clusters[i];
+		if (cluster_visible)
+		    j += k;
+		else
+		    transformed_clusters[i].num_glyphs = 0;
+	    }
+	}
+    }
+    *num_transformed_glyphs = j;
+
+    if (num_clusters != 0 && cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD) {
+	for (i = 0; i < --j; i++) {
+	    cairo_glyph_t tmp;
+
+	    tmp = transformed_glyphs[i];
+	    transformed_glyphs[i] = transformed_glyphs[j];
+	    transformed_glyphs[j] = tmp;
+	}
     }
 
     return CAIRO_STATUS_SUCCESS;
