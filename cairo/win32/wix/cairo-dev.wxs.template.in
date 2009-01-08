@@ -12,7 +12,7 @@
 				<Directory Id="ModuleInclude" Name="include">
 					<Directory Id="CairoInclude" Name="cairo">
 						<Component Id="includes" Guid="{F34AF1A5-A40A-4e6c-A983-D4AC27688419}">
-							%(include_files)s
+							%(include/cairo_files)s
 						</Component>
 					</Directory>
 				</Directory>
