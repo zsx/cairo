@@ -1,6 +1,6 @@
 @echo off
-set RELEASE_PATH=%~dp0\..\oah\Win32\Release
-pkg-config --modversion %RELEASE_PATH%\lib\pkgconfig\cairo.pc > libver.tmp || goto error
+set RELEASE_PATH=%~dp0\..\Win32\Release
+%OAH_INSTALLED_PATH%\bin\pkg-config --modversion %RELEASE_PATH%\lib\pkgconfig\cairo.pc > libver.tmp || goto error
 set /P LIBVER= < libver.tmp
 del libver.tmp
 
