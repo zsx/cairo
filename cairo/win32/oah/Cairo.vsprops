@@ -13,8 +13,6 @@
 	<Tool
 		Name="VCLinkerTool"
 		AdditionalDependencies="msimg32.lib"
-		OutputFile="$(OutDir)\bin\$(ProjectName).dll"
-		ImportLibrary="$(OutDir)\lib\$(TargetName).lib"
 	/>
 	<UserMacro
 		Name="CairoMajorVersion"
