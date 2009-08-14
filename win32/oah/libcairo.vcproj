@@ -32,21 +32,19 @@
 				Name="VCPreBuildEventTool"
 			/>
 			<Tool
-				Name="HeaderInstallerTool"
-				ModuleName="cairo"
+				Name="SymbolsGeneratorTool"
 			/>
 			<Tool
-				Name="DotInGeneratorTool"
-				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
+				Name="VCCustomBuildTool"
 			/>
 			<Tool
-				Name="SEDTool"
+				Name="PkgConfigOAHDepsTool"
 			/>
 			<Tool
 				Name="PkgConfigTool"
 			/>
 			<Tool
-				Name="SymbolsGeneratorTool"
+				Name="SEDTool"
 			/>
 			<Tool
 				Name="GObjectGenMarshalTool"
@@ -55,10 +53,15 @@
 				Name="GObjectMkEnumsTemplateTool"
 			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"
+				Name="DotInGeneratorTool"
+				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
 			/>
 			<Tool
-				Name="VCCustomBuildTool"
+				Name="HeaderInstallerTool"
+				ModuleName="cairo"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"
@@ -85,7 +88,88 @@
 				Name="VCALinkTool"
 			/>
 			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Debug|x64"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(OAH_INSTALLED_PATH)\vsprops\oah-$(PlatformName)-$(ConfigurationName).vsprops;.\Cairo.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="SymbolsGeneratorTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="PkgConfigOAHDepsTool"
+			/>
+			<Tool
+				Name="PkgConfigTool"
+			/>
+			<Tool
+				Name="SEDTool"
+			/>
+			<Tool
+				Name="GObjectGenMarshalTool"
+			/>
+			<Tool
+				Name="GObjectMkEnumsTemplateTool"
+			/>
+			<Tool
+				Name="DotInGeneratorTool"
+				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
+			/>
+			<Tool
+				Name="HeaderInstallerTool"
+				ModuleName="cairo"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
 			/>
 			<Tool
 				Name="VCManifestTool"
@@ -98,6 +182,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -114,21 +201,19 @@
 				Name="VCPreBuildEventTool"
 			/>
 			<Tool
-				Name="HeaderInstallerTool"
-				ModuleName="cairo"
+				Name="SymbolsGeneratorTool"
 			/>
 			<Tool
-				Name="DotInGeneratorTool"
-				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
+				Name="VCCustomBuildTool"
 			/>
 			<Tool
-				Name="SEDTool"
+				Name="PkgConfigOAHDepsTool"
 			/>
 			<Tool
 				Name="PkgConfigTool"
 			/>
 			<Tool
-				Name="SymbolsGeneratorTool"
+				Name="SEDTool"
 			/>
 			<Tool
 				Name="GObjectGenMarshalTool"
@@ -137,10 +222,15 @@
 				Name="GObjectMkEnumsTemplateTool"
 			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"
+				Name="DotInGeneratorTool"
+				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
 			/>
 			<Tool
-				Name="VCCustomBuildTool"
+				Name="HeaderInstallerTool"
+				ModuleName="cairo"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"
@@ -167,9 +257,6 @@
 				Name="VCALinkTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
 				Name="VCManifestTool"
 			/>
 			<Tool
@@ -182,167 +269,7 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="ReleaseWdkCrt|Win32"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(OAH_INSTALLED_PATH)\vsprops\oah-$(PlatformName)-$(ConfigurationName).vsprops;.\Cairo.vsprops"
-			CharacterSet="2"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="HeaderInstallerTool"
-				ModuleName="cairo"
-			/>
-			<Tool
-				Name="DotInGeneratorTool"
-				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
-			/>
-			<Tool
-				Name="SEDTool"
-			/>
-			<Tool
-				Name="PkgConfigTool"
-			/>
-			<Tool
-				Name="SymbolsGeneratorTool"
-			/>
-			<Tool
-				Name="GObjectGenMarshalTool"
-			/>
-			<Tool
-				Name="GObjectMkEnumsTemplateTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|x64"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(OAH_INSTALLED_PATH)\vsprops\oah-$(PlatformName)-$(ConfigurationName).vsprops;.\Cairo.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="HeaderInstallerTool"
-				ModuleName="cairo"
-			/>
-			<Tool
-				Name="DotInGeneratorTool"
-				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
-			/>
-			<Tool
-				Name="SEDTool"
-			/>
-			<Tool
-				Name="PkgConfigTool"
-			/>
-			<Tool
-				Name="SymbolsGeneratorTool"
-			/>
-			<Tool
-				Name="GObjectGenMarshalTool"
-			/>
-			<Tool
-				Name="GObjectMkEnumsTemplateTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -359,21 +286,19 @@
 				Name="VCPreBuildEventTool"
 			/>
 			<Tool
-				Name="HeaderInstallerTool"
-				ModuleName="cairo"
+				Name="SymbolsGeneratorTool"
 			/>
 			<Tool
-				Name="DotInGeneratorTool"
-				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
+				Name="VCCustomBuildTool"
 			/>
 			<Tool
-				Name="SEDTool"
+				Name="PkgConfigOAHDepsTool"
 			/>
 			<Tool
 				Name="PkgConfigTool"
 			/>
 			<Tool
-				Name="SymbolsGeneratorTool"
+				Name="SEDTool"
 			/>
 			<Tool
 				Name="GObjectGenMarshalTool"
@@ -382,10 +307,15 @@
 				Name="GObjectMkEnumsTemplateTool"
 			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"
+				Name="DotInGeneratorTool"
+				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
 			/>
 			<Tool
-				Name="VCCustomBuildTool"
+				Name="HeaderInstallerTool"
+				ModuleName="cairo"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"
@@ -412,7 +342,89 @@
 				Name="VCALinkTool"
 			/>
 			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="ReleaseWdkCrt|Win32"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(OAH_INSTALLED_PATH)\vsprops\oah-$(PlatformName)-$(ConfigurationName).vsprops;.\Cairo.vsprops"
+			CharacterSet="2"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="SymbolsGeneratorTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="PkgConfigOAHDepsTool"
+			/>
+			<Tool
+				Name="PkgConfigTool"
+			/>
+			<Tool
+				Name="SEDTool"
+			/>
+			<Tool
+				Name="GObjectGenMarshalTool"
+			/>
+			<Tool
+				Name="GObjectMkEnumsTemplateTool"
+			/>
+			<Tool
+				Name="DotInGeneratorTool"
+				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
+			/>
+			<Tool
+				Name="HeaderInstallerTool"
+				ModuleName="cairo"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
 			/>
 			<Tool
 				Name="VCManifestTool"
@@ -425,6 +437,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -441,21 +456,19 @@
 				Name="VCPreBuildEventTool"
 			/>
 			<Tool
-				Name="HeaderInstallerTool"
-				ModuleName="cairo"
+				Name="SymbolsGeneratorTool"
 			/>
 			<Tool
-				Name="DotInGeneratorTool"
-				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
+				Name="VCCustomBuildTool"
 			/>
 			<Tool
-				Name="SEDTool"
+				Name="PkgConfigOAHDepsTool"
 			/>
 			<Tool
 				Name="PkgConfigTool"
 			/>
 			<Tool
-				Name="SymbolsGeneratorTool"
+				Name="SEDTool"
 			/>
 			<Tool
 				Name="GObjectGenMarshalTool"
@@ -464,10 +477,15 @@
 				Name="GObjectMkEnumsTemplateTool"
 			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"
+				Name="DotInGeneratorTool"
+				Substitute="@VERSION@/$(CairoVersion);@CAIRO_VERSION@/$(CairoVersion);@CAIRO_VERSION_MAJOR@/$(CairoMajorVersion);@CAIRO_VERSION_MINOR@/$(CairoMinorVersion);@CAIRO_VERSION_MICRO@/$(CairoMicroVersion)"
 			/>
 			<Tool
-				Name="VCCustomBuildTool"
+				Name="HeaderInstallerTool"
+				ModuleName="cairo"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"
@@ -494,9 +512,6 @@
 				Name="VCALinkTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
 				Name="VCManifestTool"
 			/>
 			<Tool
@@ -507,6 +522,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -547,10 +565,6 @@
 			</File>
 			<File
 				RelativePath="..\..\src\cairo-cache.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\cairo-cff-subset.c"
 				>
 			</File>
 			<File
@@ -602,6 +616,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\cairo-image-info.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cairo-image-surface.c"
 				>
 			</File>
@@ -646,6 +664,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\cairo-path-in-fill.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cairo-path-stroke.c"
 				>
 			</File>
@@ -674,10 +696,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\cairo-scaled-font-subsets.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\cairo-scaled-font.c"
 				>
 			</File>
@@ -690,6 +708,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\cairo-spans.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cairo-spline.c"
 				>
 			</File>
@@ -698,7 +720,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\cairo-surface-clipper.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cairo-surface-fallback.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\cairo-surface-wrapper.c"
 				>
 			</File>
 			<File
@@ -710,23 +740,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\cairo-tor-scan-converter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\cairo-toy-font-face.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cairo-traps.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\cairo-truetype-subset.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\cairo-type1-fallback.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\cairo-type1-subset.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\cairo-type3-glyph-surface.c"
 				>
 			</File>
 			<File
@@ -781,6 +803,34 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="font_subset"
+				>
+				<File
+					RelativePath="..\..\src\cairo-cff-subset.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-scaled-font-subsets.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-truetype-subset.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-type1-fallback.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-type1-subset.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-type3-glyph-surface.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -805,6 +855,10 @@
 			</File>
 			<File
 				RelativePath="..\..\src\cairo-clip-private.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\cairo-features.h"
 				>
 			</File>
 			<File
@@ -913,46 +967,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="ReleaseWdkCrt|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Debug|x64"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="ReleaseWdkCrt|x64"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="$(IntDir)\cairo-features.h"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
@@ -966,21 +981,14 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="ReleaseWdkCrt|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Release|x64"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
@@ -1005,20 +1013,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="ReleaseWdkCrt|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Debug|x64"
 						>
 						<Tool
@@ -1026,7 +1020,21 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|x64"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
@@ -1051,20 +1059,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="ReleaseWdkCrt|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Debug|x64"
 						>
 						<Tool
@@ -1072,7 +1066,21 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|x64"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
@@ -1097,20 +1105,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="ReleaseWdkCrt|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Debug|x64"
 						>
 						<Tool
@@ -1118,7 +1112,21 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|x64"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
@@ -1143,20 +1151,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="ReleaseWdkCrt|Win32"
-						>
-						<Tool
-							Name="HeaderInstallerTool"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="Debug|x64"
 						>
 						<Tool
@@ -1164,7 +1158,21 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|x64"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
@@ -1206,7 +1214,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\cairo-features.h.in"
+				RelativePath="$(IntDir)\cairo.pc"
 				>
 			</File>
 			<File
@@ -1214,22 +1222,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					>
-					<Tool
-						Name="DotInGeneratorTool"
-						Substitute="@PKGCONFIG_REQUIRES@/Requires;@CAIRO_REQUIRES@/pixman-1 zlib;@CAIRO_NONPKGCONFIG_LIBS@/;@prefix@/\$\(OutDir\);@exec_prefix@/${prefix};@libdir@/${prefix}\/lib;@includedir@/${prefix}\/include"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="DotInGeneratorTool"
-						Substitute="@PKGCONFIG_REQUIRES@/Requires;@CAIRO_REQUIRES@/pixman-1 zlib;@CAIRO_NONPKGCONFIG_LIBS@/;@prefix@/\$\(OutDir\);@exec_prefix@/${prefix};@libdir@/${prefix}\/lib;@includedir@/${prefix}\/include"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseWdkCrt|Win32"
 					>
 					<Tool
 						Name="DotInGeneratorTool"
@@ -1245,7 +1237,23 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="DotInGeneratorTool"
+						Substitute="@PKGCONFIG_REQUIRES@/Requires;@CAIRO_REQUIRES@/pixman-1 zlib;@CAIRO_NONPKGCONFIG_LIBS@/;@prefix@/\$\(OutDir\);@exec_prefix@/${prefix};@libdir@/${prefix}\/lib;@includedir@/${prefix}\/include"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|x64"
+					>
+					<Tool
+						Name="DotInGeneratorTool"
+						Substitute="@PKGCONFIG_REQUIRES@/Requires;@CAIRO_REQUIRES@/pixman-1 zlib;@CAIRO_NONPKGCONFIG_LIBS@/;@prefix@/\$\(OutDir\);@exec_prefix@/${prefix};@libdir@/${prefix}\/lib;@includedir@/${prefix}\/include"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseWdkCrt|Win32"
 					>
 					<Tool
 						Name="DotInGeneratorTool"
@@ -1266,8 +1274,17 @@
 				>
 			</File>
 			<File
-				RelativePath="$(IntDir)\cairo.pc"
+				RelativePath="..\..\build\Makefile.win32.features"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="cd $(InputDir)..&#x0D;&#x0A;copy build\Makefile.win32.features+build\Makefile.win32.features-h $(IntDir)\Makefile&#x0D;&#x0A;sed -e &quot;s/ifeq\(.*\),\(.*\)/!if \1 == \2/g&quot; -e &quot;s/endif/!endif/g&quot; C:\OAH\modules\cairo\git-repo\win32\oah\Win32\Debug\obj\libcairo\Makefile &gt; $(IntDir)\Makefile.new&#x0D;&#x0A;del $(IntDir)\Makefile&#x0D;&#x0A;nmake -f  $(IntDir)\Makefile.new src\cairo-features.h&#x0D;&#x0A;del $(IntDir)\Makefile.new&#x0D;&#x0A;&#x0D;&#x0A;&quot;%OAH_INSTALLED_PATH%\bin\sed.exe&quot; -e &quot;s/\&quot;//&quot; -e &quot;s/\!endif/endif/&quot; -e &quot;s/\&quot;//&quot; src/cairo-features.h &gt; src/cairo-features.h.tmp&#x0D;&#x0A;del src\cairo-features.h&#x0D;&#x0A;copy /y src\cairo-features.h.tmp src\cairo-features.h&#x0D;&#x0A;del src\cairo-features.h.tmp&#x0D;&#x0A;"
+						Outputs="$(InputDir)..\src\features.h"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>
