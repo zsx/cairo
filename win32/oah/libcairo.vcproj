@@ -696,6 +696,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\cairo-rtree.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\cairo-scaled-font.c"
 				>
 			</File>
@@ -858,10 +862,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\cairo-features.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\cairo-freelist-private.h"
 				>
 			</File>
@@ -996,6 +996,31 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="ReleaseWdkCrt|x64"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-features.h"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
 						>
 						<Tool
 							Name="HeaderInstallerTool"
