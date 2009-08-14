@@ -83,6 +83,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libpng.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -252,6 +253,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libpng.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -422,6 +424,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libpng.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -835,6 +838,30 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="SVG"
+				>
+				<File
+					RelativePath="..\..\src\cairo-svg-surface.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="PNG"
+				>
+				<File
+					RelativePath="..\..\src\cairo-png.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="PS"
+				>
+				<File
+					RelativePath="..\..\src\cairo-ps-surface.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1074,6 +1101,56 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\..\src\cairo-ps.h"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\src\cairo-svg.h"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseWdkCrt|Win32"
+						>
+						<Tool
+							Name="HeaderInstallerTool"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
 					RelativePath="..\..\cairo-version.h"
 					>
 					<FileConfiguration
@@ -1229,6 +1306,22 @@
 				</File>
 				<File
 					RelativePath="..\..\src\cairo-pdf-surface-private.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="SVG"
+				>
+				<File
+					RelativePath="..\..\src\cairo-svg-surface-private.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="PS"
+				>
+				<File
+					RelativePath="..\..\src\cairo-ps-surface-private.h"
 					>
 				</File>
 			</Filter>
