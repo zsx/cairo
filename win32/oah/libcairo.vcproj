@@ -83,7 +83,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -1334,6 +1333,30 @@
 			<File
 				RelativePath="$(IntDir)\cairo.pc"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="PkgConfigTool"
+						AdditionalDeps="libpng12"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="PkgConfigTool"
+						AdditionalDeps="libpng12"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseWdkCrt|Win32"
+					>
+					<Tool
+						Name="PkgConfigTool"
+						AdditionalDeps="libpng12"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\src\cairo.pc.in"
