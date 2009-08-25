@@ -1422,8 +1422,8 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="cd $(InputDir)..&#x0D;&#x0A;copy build\Makefile.win32.features+build\Makefile.win32.features-h $(IntDir)\Makefile&#x0D;&#x0A;sed -e &quot;s/ifeq\(.*\),\(.*\)/!if \1 == \2/g&quot; -e &quot;s/endif/!endif/g&quot; C:\OAH\modules\cairo\git-repo\win32\oah\Win32\Debug\obj\libcairo\Makefile &gt; $(IntDir)\Makefile.new&#x0D;&#x0A;del $(IntDir)\Makefile&#x0D;&#x0A;nmake -f  $(IntDir)\Makefile.new src\cairo-features.h&#x0D;&#x0A;del $(IntDir)\Makefile.new&#x0D;&#x0A;&#x0D;&#x0A;&quot;%OAH_INSTALLED_PATH%\bin\sed.exe&quot; -e &quot;s/\&quot;//&quot; -e &quot;s/\!endif/endif/&quot; -e &quot;s/\&quot;//&quot; src/cairo-features.h &gt; src/cairo-features.h.tmp&#x0D;&#x0A;del src\cairo-features.h&#x0D;&#x0A;copy /y src\cairo-features.h.tmp src\cairo-features.h&#x0D;&#x0A;del src\cairo-features.h.tmp&#x0D;&#x0A;"
-						Outputs="$(InputDir)..\src\features.h"
+						CommandLine="cd &quot;$(InputDir)..&quot;&#x0D;&#x0A;copy build\Makefile.win32.features+build\Makefile.win32.features-h &quot;$(IntDir)\Makefile&quot;&#x0D;&#x0A;&quot;%OAH_INSTALLED_PATH%\bin\sed.exe&quot;  -e &quot;s/ifeq\(.*\),\(.*\)/!if \1 == \2/g&quot; -e &quot;s/endif/!endif/g&quot; &quot;$(IntDir)\Makefile&quot; &gt; &quot;$(IntDir)\Makefile.new&quot;&#x0D;&#x0A;del &quot;$(IntDir)\Makefile&quot;&#x0D;&#x0A;nmake -f  &quot;$(IntDir)\Makefile.new&quot; src\cairo-features.h&#x0D;&#x0A;del &quot;$(IntDir)\Makefile.new&quot;&#x0D;&#x0A;&#x0D;&#x0A;&quot;%OAH_INSTALLED_PATH%\bin\sed.exe&quot; -e &quot;s/\&quot;//&quot; -e &quot;s/\!endif/endif/&quot; -e &quot;s/\&quot;//&quot; src/cairo-features.h &gt; src/cairo-features.h.tmp&#x0D;&#x0A;del src\cairo-features.h&#x0D;&#x0A;copy /y src\cairo-features.h.tmp src\cairo-features.h&#x0D;&#x0A;del src\cairo-features.h.tmp&#x0D;&#x0A;"
+						Outputs="$(InputDir)..\src\cairo-features.h"
 					/>
 				</FileConfiguration>
 			</File>
