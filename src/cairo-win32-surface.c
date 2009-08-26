@@ -359,6 +359,7 @@ _cairo_win32_surface_create_for_dc (HDC             original_dc,
 
     surface->initial_clip_rgn = NULL;
     surface->had_simple_clip = FALSE;
+	surface->clip_region = NULL;
 
     surface->extents = surface->clip_rect;
     surface->font_subsets = NULL;
@@ -1758,6 +1759,8 @@ cairo_win32_surface_create (HDC hdc)
     surface->extents.y = rect.top;
     surface->extents.width = rect.right - rect.left;
     surface->extents.height = rect.bottom - rect.top;
+
+	surface->clip_region = NULL;
 
     surface->flags = _cairo_win32_flags_for_dc (surface->dc);
 
