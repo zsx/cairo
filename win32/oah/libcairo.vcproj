@@ -42,7 +42,6 @@
 			/>
 			<Tool
 				Name="PkgConfigTool"
-				AdditionalDeps="libpng12"
 			/>
 			<Tool
 				Name="SEDTool"
@@ -253,6 +252,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libpng.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
