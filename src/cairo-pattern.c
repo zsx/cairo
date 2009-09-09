@@ -486,7 +486,7 @@ _freed_pattern_get (freed_pool_t *pool)
 	i = 0;
 
     pattern = _atomic_fetch (&pool->pool[i]);
-    if (pattern != NULL) {
+    if (likely (pattern != NULL)) {
 	pool->top = i;
 	return pattern;
     }
@@ -511,8 +511,8 @@ _freed_pattern_put (freed_pool_t *pool,
 {
     int i = pool->top;
 
-    if (i < ARRAY_LENGTH (pool->pool) &&
-	_atomic_store (&pool->pool[i], pattern))
+    if (likely (i < ARRAY_LENGTH (pool->pool) &&
+		_atomic_store (&pool->pool[i], pattern)))
     {
 	pool->top = i + 1;
 	return;
@@ -549,7 +549,7 @@ cairo_pattern_t *
 _cairo_pattern_create_solid (const cairo_color_t *color,
 			     cairo_content_t	  content)
 {
-    cairo_solid_pattern_t *pattern = NULL;
+    cairo_solid_pattern_t *pattern;
 
     pattern =
 	_freed_pattern_get (&freed_pattern_pool[CAIRO_PATTERN_TYPE_SOLID]);
@@ -870,7 +870,6 @@ cairo_pattern_status (cairo_pattern_t *pattern)
 {
     return pattern->status;
 }
-slim_hidden_def (cairo_pattern_status);
 
 /**
  * cairo_pattern_destroy:
@@ -2116,7 +2115,7 @@ _cairo_pattern_acquire_surface_for_surface (const cairo_surface_pattern_t   *pat
     sampled_area.y += ty;
 
     if ( _cairo_surface_get_extents (surface, &extents)) {
-	if (attr->extend != CAIRO_EXTEND_REPEAT) {
+	if (attr->extend == CAIRO_EXTEND_NONE) {
 	    /* Never acquire a larger area than the source itself */
 	    is_empty = _cairo_rectangle_intersect (&extents, &sampled_area);
 	} else {
@@ -2586,9 +2585,14 @@ _cairo_pattern_hash (const cairo_pattern_t *pattern)
 	return 0;
 
     hash = _cairo_hash_bytes (hash, &pattern->type, sizeof (pattern->type));
-    hash = _cairo_hash_bytes (hash, &pattern->matrix, sizeof (pattern->matrix));
-    hash = _cairo_hash_bytes (hash, &pattern->filter, sizeof (pattern->filter));
-    hash = _cairo_hash_bytes (hash, &pattern->extend, sizeof (pattern->extend));
+    if (pattern->type != CAIRO_PATTERN_TYPE_SOLID) {
+	hash = _cairo_hash_bytes (hash,
+				  &pattern->matrix, sizeof (pattern->matrix));
+	hash = _cairo_hash_bytes (hash,
+				  &pattern->filter, sizeof (pattern->filter));
+	hash = _cairo_hash_bytes (hash,
+				  &pattern->extend, sizeof (pattern->extend));
+    }
 
     switch (pattern->type) {
     case CAIRO_PATTERN_TYPE_SOLID:
@@ -2745,14 +2749,16 @@ _cairo_pattern_equal (const cairo_pattern_t *a, const cairo_pattern_t *b)
     if (a->type != b->type)
 	return FALSE;
 
-    if (memcmp (&a->matrix, &b->matrix, sizeof (cairo_matrix_t)))
-	return FALSE;
+    if (a->type != CAIRO_PATTERN_TYPE_SOLID) {
+	if (memcmp (&a->matrix, &b->matrix, sizeof (cairo_matrix_t)))
+	    return FALSE;
 
-    if (a->filter != b->filter)
-	return FALSE;
+	if (a->filter != b->filter)
+	    return FALSE;
 
-    if (a->extend != b->extend)
-	return FALSE;
+	if (a->extend != b->extend)
+	    return FALSE;
+    }
 
     switch (a->type) {
     case CAIRO_PATTERN_TYPE_SOLID:

@@ -48,9 +48,11 @@
 #include <sched.h>
 #endif
 
-#define CAIRO_PERF_ITERATIONS_DEFAULT	100
-#define CAIRO_PERF_LOW_STD_DEV		0.03
-#define CAIRO_PERF_STABLE_STD_DEV_COUNT	5
+#define CAIRO_PERF_ITERATIONS_DEFAULT		100
+#define CAIRO_PERF_LOW_STD_DEV			0.03
+#define CAIRO_PERF_STABLE_STD_DEV_COUNT		5
+#define CAIRO_PERF_ITERATION_MS_DEFAULT		2000
+#define CAIRO_PERF_ITERATION_MS_FAST		5
 
 typedef struct _cairo_perf_case {
     CAIRO_PERF_DECL (*run);
@@ -107,6 +109,9 @@ target_is_measurable (const cairo_boilerplate_target_t *target)
 #if CAIRO_HAS_DRM_SURFACE
     case CAIRO_SURFACE_TYPE_DRM:
 #endif
+#if CAIRO_HAS_SKIA_SURFACE
+    case CAIRO_SURFACE_TYPE_SKIA:
+#endif
 	return TRUE;
 
     default:
@@ -153,18 +158,62 @@ cairo_perf_has_similar (cairo_perf_t *perf)
 
 cairo_bool_t
 cairo_perf_can_run (cairo_perf_t	*perf,
-		    const char		*name)
+		    const char		*name,
+		    cairo_bool_t	*is_explicit)
 {
     unsigned int i;
+
+    if (is_explicit)
+	*is_explicit = FALSE;
 
     if (perf->num_names == 0)
 	return TRUE;
 
-    for (i = 0; i < perf->num_names; i++)
-	if (strstr (name, perf->names[i]))
+    for (i = 0; i < perf->num_names; i++) {
+	if (strstr (name, perf->names[i])) {
+	    if (is_explicit)
+		*is_explicit = FALSE;
 	    return TRUE;
+	}
+    }
 
     return FALSE;
+}
+
+static unsigned
+cairo_perf_calibrate (cairo_perf_t *perf,
+		      cairo_perf_func_t	 perf_func)
+{
+    cairo_perf_ticks_t calibration0, calibration;
+    unsigned loops, min_loops;
+
+    calibration0 = perf_func (perf->cr, perf->size, perf->size, 1);
+    if (perf->fast_and_sloppy) {
+	calibration = calibration0;
+    } else {
+	loops = cairo_perf_ticks_per_second () / 100 / calibration0;
+	if (loops < 3)
+	    loops = 3;
+	calibration = (calibration0 + perf_func (perf->cr, perf->size, perf->size, loops)) / (loops + 1);
+    }
+
+    /* XXX
+     * Compute the number of loops required for the timing
+     * interval to be perf->ms_per_iteration milliseconds. This
+     * helps to eliminate sampling variance due to timing and
+     * other systematic errors.  However, it also hides
+     * synchronisation overhead as we attempt to process a large
+     * batch of identical operations in a single shot. This can be
+     * considered both good and bad... It would be good to perform
+     * a more rigorous analysis of the synchronisation overhead,
+     * that is to estimate the time for loop=0.
+     */
+    loops = perf->ms_per_iteration * 0.001 * cairo_perf_ticks_per_second () / calibration;
+    min_loops = perf->fast_and_sloppy ? 1 : 10;
+    if (loops < min_loops)
+	loops = min_loops;
+
+    return loops;
 }
 
 void
@@ -221,7 +270,6 @@ cairo_perf_run (cairo_perf_t		*perf,
 
     has_similar = cairo_perf_has_similar (perf);
     for (similar = 0; similar <= has_similar; similar++) {
-	cairo_perf_ticks_t calibration0, calibration;
 	unsigned loops;
 
 	if (perf->summary) {
@@ -239,27 +287,9 @@ cairo_perf_run (cairo_perf_t		*perf,
 	    cairo_push_group_with_content (perf->cr,
 		                           cairo_boilerplate_content (perf->target->content));
 	perf_func (perf->cr, perf->size, perf->size, 1);
-	calibration0 = perf_func (perf->cr, perf->size, perf->size, 1);
-	loops = cairo_perf_ticks_per_second () / 100 / calibration0;
-	if (loops < 3)
-	    loops = 3;
-	calibration = (calibration0 + perf_func (perf->cr, perf->size, perf->size, loops)) / (loops + 1);
+	loops = cairo_perf_calibrate (perf, perf_func);
 	if (similar)
 	    cairo_pattern_destroy (cairo_pop_group (perf->cr));
-
-	/* XXX
-	 * Compute the number of loops required for the timing interval to
-	 * be ~2 seconds. This helps to eliminate sampling variance due to
-	 * timing and other systematic errors. However, it also hides
-	 * synchronisation overhead as we attempt to process a large batch
-	 * of identical operations in a single shot. This can be considered
-	 * both good and bad... It would be good to perform a more rigorous
-	 * analysis of the synchronisation overhead, that is to estimate
-	 * the time for loop=0.
-	 */
-	loops = 2 * cairo_perf_ticks_per_second () / calibration;
-	if (loops < 10)
-	    loops = 10;
 
 	low_std_dev_count = 0;
 	for (i =0; i < perf->iterations; i++) {
@@ -301,12 +331,11 @@ cairo_perf_run (cairo_perf_t		*perf,
 	if (perf->summary) {
 	    _cairo_stats_compute (&stats, times, i);
 	    fprintf (perf->summary,
-		     "%10lld %#8.3f %#8.3f %#5.2f%% %3d %10lld\n",
+		     "%10lld %#8.3f %#8.3f %#5.2f%% %3d\n",
 		     (long long) stats.min_ticks,
 		     (stats.min_ticks * 1000.0) / cairo_perf_ticks_per_second (),
 		     (stats.median_ticks * 1000.0) / cairo_perf_ticks_per_second (),
-		     stats.std_dev * 100.0, stats.iterations,
-		     (long long) (calibration0 - stats.min_ticks));
+		     stats.std_dev * 100.0, stats.iterations);
 	    fflush (perf->summary);
 	}
 
@@ -339,6 +368,7 @@ parse_options (cairo_perf_t *perf, int argc, char *argv[])
 {
     int c;
     const char *iters;
+    const char *ms = NULL;
     char *end;
     int verbose = 0;
 
@@ -348,6 +378,12 @@ parse_options (cairo_perf_t *perf, int argc, char *argv[])
 	perf->iterations = CAIRO_PERF_ITERATIONS_DEFAULT;
     perf->exact_iterations = 0;
 
+    perf->fast_and_sloppy = FALSE;
+    perf->ms_per_iteration = CAIRO_PERF_ITERATION_MS_DEFAULT;
+    if ((ms = getenv("CAIRO_PERF_ITERATION_MS")) && *ms) {
+	perf->ms_per_iteration = atof(ms);
+    }
+
     perf->raw = FALSE;
     perf->list_only = FALSE;
     perf->names = NULL;
@@ -355,7 +391,7 @@ parse_options (cairo_perf_t *perf, int argc, char *argv[])
     perf->summary = stdout;
 
     while (1) {
-	c = _cairo_getopt (argc, argv, "i:lrv");
+	c = _cairo_getopt (argc, argv, "i:lrvf");
 	if (c == -1)
 	    break;
 
@@ -375,6 +411,11 @@ parse_options (cairo_perf_t *perf, int argc, char *argv[])
 	case 'r':
 	    perf->raw = TRUE;
 	    perf->summary = NULL;
+	    break;
+	case 'f':
+	    perf->fast_and_sloppy = TRUE;
+	    if (ms == NULL)
+		perf->ms_per_iteration = CAIRO_PERF_ITERATION_MS_FAST;
 	    break;
 	case 'v':
 	    verbose = 1;

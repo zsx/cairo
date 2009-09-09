@@ -210,9 +210,11 @@ static csi_status_t
 _csi_ostack_get_boolean (csi_t *ctx, unsigned int i, csi_boolean_t *out)
 {
     csi_object_t *obj;
+    int type;
 
     obj = _csi_peek_ostack (ctx, i);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_BOOLEAN:
 	*out = obj->datum.boolean;
 	break;
@@ -232,9 +234,11 @@ static csi_status_t
 _csi_ostack_get_integer (csi_t *ctx, unsigned int i, csi_integer_t *out)
 {
     csi_object_t *obj;
+    int type;
 
     obj = _csi_peek_ostack (ctx, i);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_BOOLEAN:
 	*out = obj->datum.boolean;
 	break;
@@ -254,9 +258,11 @@ static csi_status_t
 _csi_ostack_get_number (csi_t *ctx, unsigned int i, double *out)
 {
     csi_object_t *obj;
+    int type;
 
     obj = _csi_peek_ostack (ctx, i);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_BOOLEAN:
 	*out = obj->datum.boolean;
 	break;
@@ -400,9 +406,11 @@ static csi_status_t
 _csi_ostack_get_matrix (csi_t *ctx, unsigned int i, cairo_matrix_t *out)
 {
     csi_object_t *obj;
+    int type;
 
     obj = _csi_peek_ostack (ctx, i);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_MATRIX:
 	*out = obj->datum.matrix->matrix;
 	return CSI_STATUS_SUCCESS;
@@ -432,6 +440,7 @@ _csi_dictionary_get_integer (csi_t *ctx,
 {
     csi_status_t status;
     csi_object_t key, obj;
+    int type;
 
     status = csi_name_new_static (ctx, &key, name);
     if (_csi_unlikely (status))
@@ -444,7 +453,8 @@ _csi_dictionary_get_integer (csi_t *ctx,
     if (_csi_unlikely (status))
 	return status;
 
-    switch ((int) csi_object_get_type (&obj)) {
+    type = csi_object_get_type (&obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_BOOLEAN:
 	*value = obj.datum.boolean;
 	break;
@@ -502,9 +512,11 @@ static csi_status_t
 _csi_ostack_get_string_constant (csi_t *ctx, unsigned int i, const char **out)
 {
     csi_object_t *obj;
+    int type;
 
     obj = _csi_peek_ostack (ctx, i);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_NAME:
 	*out = (const char *) obj->datum.name;
 	break;
@@ -728,6 +740,7 @@ static csi_status_t
 _and (csi_t *ctx)
 {
     csi_object_t *a, *b;
+    int type;
 
     check (2);
 
@@ -737,7 +750,8 @@ _and (csi_t *ctx)
 	return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 
     pop (2);
-    switch ((int) csi_object_get_type (a)) {
+    type = csi_object_get_type (a);
+    switch (type) {
     case CSI_OBJECT_TYPE_INTEGER:
 	return _csi_push_ostack_integer (ctx,
 					 a->datum.integer & b->datum.integer);
@@ -1009,13 +1023,15 @@ static csi_status_t
 _copy (csi_t *ctx)
 {
     csi_object_t *obj;
+    int type;
 
     check (1);
 
     obj = csi_object_reference (_csi_peek_ostack (ctx, 0));
     pop (1);
 
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
 	/*XXX array, string, dictionary, etc */
     case CSI_OBJECT_TYPE_INTEGER:
 	{
@@ -1047,11 +1063,13 @@ static csi_status_t
 _copy_page (csi_t *ctx)
 {
     csi_object_t *obj;
+    int type;
 
     check (1);
 
     obj = _csi_peek_ostack (ctx, 0);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_copy_page (obj->datum.cr);
 	if (ctx->hooks.copy_page != NULL)
@@ -1112,12 +1130,13 @@ static csi_status_t
 _cvi (csi_t *ctx)
 {
     csi_object_t *val, obj;
+    int type;
 
     check (1);
 
     val = _csi_peek_ostack (ctx, 0);
-
-    switch ((int) csi_object_get_type (val)) {
+    type = csi_object_get_type (val);
+    switch (type) {
     case CSI_OBJECT_TYPE_INTEGER:
 	return CSI_STATUS_SUCCESS;
 
@@ -1148,12 +1167,13 @@ static csi_status_t
 _cvr (csi_t *ctx)
 {
     csi_object_t *val, obj;
+    int type;
 
     check (1);
 
     val = _csi_peek_ostack (ctx, 0);
-
-    switch ((int) csi_object_get_type (val)) {
+    type = csi_object_get_type (val);
+    switch (type) {
     case CSI_OBJECT_TYPE_REAL:
 	return CSI_STATUS_SUCCESS;
 
@@ -1272,7 +1292,7 @@ _div (csi_t *ctx)
 }
 
 static csi_status_t
-_dup (csi_t *ctx)
+_duplicate (csi_t *ctx)
 {
     check (1);
 
@@ -1834,7 +1854,7 @@ _ft_create_for_pattern (csi_t *ctx,
     struct _ft_face_data *data;
     csi_list_t *link;
     cairo_font_face_t *font_face;
-    FcPattern *pattern;
+    FcPattern *pattern, *resolved;
     csi_status_t status;
     struct mmap_vec vec;
     void *bytes;
@@ -1861,8 +1881,20 @@ _ft_create_for_pattern (csi_t *ctx,
     if (bytes != tmpl.bytes)
 	_csi_free (ctx, bytes);
 
-    font_face = cairo_ft_font_face_create_for_pattern (pattern);
-    FcPatternDestroy (pattern);
+    resolved = pattern;
+    if (cairo_version () < CAIRO_VERSION_ENCODE (1, 9, 0)) {
+	/* prior to 1.9, you needed to pass a resolved pattern */
+	resolved = FcFontMatch (NULL, pattern, NULL);
+	if (_csi_unlikely (resolved == NULL)) {
+	    FcPatternDestroy (resolved);
+	    return _csi_error (CSI_STATUS_NO_MEMORY);
+	}
+    }
+
+    font_face = cairo_ft_font_face_create_for_pattern (resolved);
+    FcPatternDestroy (resolved);
+    if (resolved != pattern)
+	FcPatternDestroy (pattern);
 
     data = _csi_slab_alloc (ctx, sizeof (*data));
     ctx->_faces = _csi_list_prepend (ctx->_faces, &data->blob.list);
@@ -1917,14 +1949,19 @@ _ft_type42_create (csi_t *ctx,
 
     /* two basic sub-types, either an FcPattern or embedded font */
     status = csi_name_new_static (ctx, &key, "pattern");
+    if (_csi_unlikely (status))
+	return status;
+
     if (csi_dictionary_has (font, key.datum.name)) {
 	csi_object_t obj;
+	int type;
 
 	status = csi_dictionary_get (ctx, font, key.datum.name, &obj);
 	if (_csi_unlikely (status))
 	    return status;
 
-	switch ((int) csi_object_get_type (&obj)) {
+	type = csi_object_get_type (&obj);
+	switch (type) {
 	case CSI_OBJECT_TYPE_FILE:
 	    status = _csi_file_as_string (ctx, obj.datum.file, &obj);
 	    if (_csi_unlikely (status))
@@ -1949,6 +1986,7 @@ _ft_type42_create (csi_t *ctx,
     if (csi_dictionary_has (font, key.datum.name)) {
 	csi_object_t obj;
 	long index, flags;
+	int type;
 
 	index = 0;
 	status = _csi_dictionary_get_integer (ctx, font, "index", TRUE, &index);
@@ -1966,7 +2004,8 @@ _ft_type42_create (csi_t *ctx,
 	status = csi_dictionary_get (ctx, font, key.datum.name, &obj);
 	if (_csi_unlikely (status))
 	    return status;
-	switch ((int) csi_object_get_type (&obj)) {
+	type = csi_object_get_type (&obj);
+	switch (type) {
 	case CSI_OBJECT_TYPE_FILE:
 	    status = _csi_file_as_string (ctx, obj.datum.file, &obj);
 	    if (_csi_unlikely (status))
@@ -1990,6 +2029,120 @@ _ft_type42_create (csi_t *ctx,
 #define _ft_type42_create(ctx, font, face_out) CSI_INT_STATUS_UNSUPPORTED
 #endif
 
+static char *
+_fc_strcpy (csi_t *ctx, const char *str)
+{
+    char *ret;
+    int len;
+
+    ret = strchr (str, ':');
+    if (ret != NULL)
+	len = ret - str;
+    else
+	len = strlen (str);
+
+    ret = _csi_alloc (ctx, len+1);
+    if (_csi_unlikely (ret == NULL))
+	return NULL;
+
+    memcpy (ret, str, len);
+    ret[len] = '\0';
+
+    return ret;
+}
+
+static cairo_font_face_t *
+_select_font (const char *name)
+{
+    cairo_surface_t *surface;
+    cairo_font_face_t *face;
+    cairo_t *cr;
+
+    /* create a dummy context to choose a font */
+    surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 0, 0);
+    cr = cairo_create (surface);
+    cairo_surface_destroy (surface);
+
+    cairo_select_font_face (cr, name,
+			    CAIRO_FONT_SLANT_NORMAL,
+			    CAIRO_FONT_WEIGHT_NORMAL);
+    face = cairo_font_face_reference (cairo_get_font_face (cr));
+    cairo_destroy (cr);
+
+    return face;
+}
+
+static csi_status_t
+_ft_fallback_create_for_pattern (csi_t *ctx,
+				 csi_string_t *string,
+				 cairo_font_face_t **font_face_out)
+{
+    char *str, *name;
+
+    str = string->string;
+#if 0
+    name = strstr (str, "fullname=");
+    if (name != NULL)
+	str = name + 9;
+#endif
+
+    name = _fc_strcpy (ctx, str);
+    if (_csi_unlikely (name == NULL))
+	return _csi_error (CSI_STATUS_NO_MEMORY);
+
+    *font_face_out = _select_font (name);
+    _csi_free (ctx, name);
+
+    return CSI_STATUS_SUCCESS;
+}
+
+static csi_status_t
+_ft_type42_fallback_create (csi_t *ctx,
+			    csi_dictionary_t *font,
+			    cairo_font_face_t **font_face_out)
+{
+    csi_object_t key;
+    csi_status_t status;
+
+    /* attempt to select a similar font */
+
+    /* two basic sub-types, either an FcPattern or embedded font */
+    status = csi_name_new_static (ctx, &key, "pattern");
+    if (_csi_unlikely (status))
+	return status;
+
+    if (csi_dictionary_has (font, key.datum.name)) {
+	csi_object_t obj;
+	int type;
+
+	status = csi_dictionary_get (ctx, font, key.datum.name, &obj);
+	if (_csi_unlikely (status))
+	    return status;
+
+	type = csi_object_get_type (&obj);
+	switch (type) {
+	case CSI_OBJECT_TYPE_FILE:
+	    status = _csi_file_as_string (ctx, obj.datum.file, &obj);
+	    if (_csi_unlikely (status))
+		return status;
+	    break;
+	case CSI_OBJECT_TYPE_STRING:
+	    obj.datum.object->ref++;
+	    break;
+	default:
+	    return  _csi_error (CSI_STATUS_INVALID_SCRIPT);
+	}
+
+	return _ft_fallback_create_for_pattern (ctx,
+						obj.datum.string,
+						font_face_out);
+    }
+
+    /* XXX: enable the trace to run */
+    *font_face_out = _select_font ("Sans");
+    return CSI_STATUS_SUCCESS;
+}
+
 static csi_status_t
 _font_type42 (csi_t *ctx, csi_dictionary_t *font, cairo_font_face_t **font_face)
 {
@@ -1999,7 +2152,7 @@ _font_type42 (csi_t *ctx, csi_dictionary_t *font, cairo_font_face_t **font_face)
     if (_csi_likely (status != CSI_INT_STATUS_UNSUPPORTED))
 	return status;
 
-    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
+    return _ft_type42_fallback_create (ctx, font, font_face);
 }
 
 static csi_status_t
@@ -2259,16 +2412,17 @@ _get (csi_t *ctx)
 {
     csi_object_t *key, *src, obj;
     csi_status_t status;
+    int type;
 
     check (2);
 
     key = _csi_peek_ostack (ctx, 0);
     src = _csi_peek_ostack (ctx, 1);
     pop (1);
-    switch ((int) csi_object_get_type (src)) {
+    type = csi_object_get_type (src);
+    switch (type) {
     case CSI_OBJECT_TYPE_DICTIONARY:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_NAME))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_NAME))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 
 	status = csi_dictionary_get (ctx,
@@ -2277,8 +2431,7 @@ _get (csi_t *ctx)
 				     &obj);
 	break;
     case CSI_OBJECT_TYPE_ARRAY:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_INTEGER))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_INTEGER))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 
 	status = csi_array_get (ctx,
@@ -2293,32 +2446,27 @@ _get (csi_t *ctx)
 #endif
 
     case CSI_OBJECT_TYPE_CONTEXT:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_NAME))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_NAME))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 	return _context_get (ctx, src->datum.cr, key->datum.name);
 
     case CSI_OBJECT_TYPE_FONT:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_NAME))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_NAME))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 	return _font_get (ctx, src->datum.font_face, key->datum.name);
 
     case CSI_OBJECT_TYPE_PATTERN:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_NAME))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_NAME))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 	return _pattern_get (ctx, src->datum.pattern, key->datum.name);
 
     case CSI_OBJECT_TYPE_SCALED_FONT:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_NAME))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_NAME))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 	return _scaled_font_get (ctx, src->datum.scaled_font, key->datum.name);
 
     case CSI_OBJECT_TYPE_SURFACE:
-	if (_csi_unlikely (csi_object_get_type (key) !=
-			     CSI_OBJECT_TYPE_NAME))
+	if (_csi_unlikely (csi_object_get_type (key) != CSI_OBJECT_TYPE_NAME))
 	    return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 	return _surface_get (ctx, src->datum.surface, key->datum.name);
 
@@ -2351,7 +2499,7 @@ _glyph_string (csi_t *ctx,
 	       cairo_scaled_font_t *scaled_font,
 	       cairo_glyph_t *glyphs)
 {
-    double x,y;
+    double x,y, dx;
     csi_integer_t nglyphs, i, j;
     struct glyph_advance_cache *cache;
     cairo_status_t status;
@@ -2381,8 +2529,9 @@ _glyph_string (csi_t *ctx,
     x = y = 0;
     for (i = 0; i < array->stack.len; i++) {
 	const csi_object_t *obj = &array->stack.objects[i];
+	int type = csi_object_get_type (obj);
 
-	switch ((int) csi_object_get_type (obj)) {
+	switch (type) {
 	case CSI_OBJECT_TYPE_ARRAY: {
 	    const csi_array_t *glyph_array = obj->datum.array;
 	    for (j = 0; j < glyph_array->stack.len; j++) {
@@ -2448,12 +2597,23 @@ _glyph_string (csi_t *ctx,
 	}
 
 	case CSI_OBJECT_TYPE_INTEGER:
-	case CSI_OBJECT_TYPE_REAL: /* dx */
-	    x = csi_number_get_value (obj);
-	    if (++i == array->stack.len)
+	case CSI_OBJECT_TYPE_REAL: /* dx or x*/
+	    dx = csi_number_get_value (obj);
+	    if (i+1 == array->stack.len)
 		break;
-	    y = csi_number_get_value (&array->stack.objects[i]);
-	    break;
+
+	    type = csi_object_get_type (&array->stack.objects[i+1]);
+	    switch (type) {
+	    case CSI_OBJECT_TYPE_INTEGER:
+	    case CSI_OBJECT_TYPE_REAL: /* y */
+		y = csi_number_get_value (&array->stack.objects[i+1]);
+		x = dx;
+		i++;
+		break;
+
+	    default:
+		x += dx;
+	    }
 	}
     }
 
@@ -2463,7 +2623,6 @@ _glyph_string (csi_t *ctx,
 static csi_status_t
 _glyph_path (csi_t *ctx)
 {
-    csi_object_t *obj;
     csi_array_t *array;
     csi_status_t status;
     cairo_t *cr;
@@ -2482,8 +2641,9 @@ _glyph_path (csi_t *ctx)
     /* count glyphs */
     nglyphs = 0;
     for (i = 0; i < array->stack.len; i++) {
-	obj = &array->stack.objects[i];
-	switch ((int) csi_object_get_type (obj)) {
+	csi_object_t *obj = &array->stack.objects[i];
+	int type = csi_object_get_type (obj);
+	switch (type) {
 	case CSI_OBJECT_TYPE_ARRAY:
 	    nglyphs += obj->datum.array->stack.len;
 	    break;
@@ -2669,10 +2829,9 @@ _image_read_raw (csi_file_t *src,
     case CAIRO_FORMAT_RGB24:
 	len = 3 * width * height;
 	break;
+    default:
     case CAIRO_FORMAT_ARGB32:
 	len = 4 * width * height;
-	break;
-    default:
 	break;
     }
 
@@ -2942,8 +3101,11 @@ _image_load_from_dictionary (csi_t *ctx,
 	return status;
 
     status = csi_name_new_static (ctx, &key, "source");
+    if (_csi_unlikely (status))
+	return status;
+
     if (csi_dictionary_has (dict, key.datum.name)) {
-	enum mime_type type;
+	enum mime_type mime_type;
 	csi_object_t file;
 
 	status = csi_dictionary_get (ctx, dict, key.datum.name, &obj);
@@ -2954,16 +3116,18 @@ _image_load_from_dictionary (csi_t *ctx,
 	if (_csi_unlikely (status))
 	    return status;
 
-	type = MIME_TYPE_NONE;
+	mime_type = MIME_TYPE_NONE;
 	if (csi_dictionary_has (dict, key.datum.name)) {
 	    csi_object_t type_obj;
 	    const char *type_str;
+	    int type;
 
 	    status = csi_dictionary_get (ctx, dict, key.datum.name, &type_obj);
 	    if (_csi_unlikely (status))
 		return status;
 
-	    switch ((int) csi_object_get_type (&type_obj)){
+	    type = csi_object_get_type (&type_obj);
+	    switch (type) {
 	    case CSI_OBJECT_TYPE_STRING:
 		type_str = type_obj.datum.string->string;
 		break;
@@ -2975,7 +3139,7 @@ _image_load_from_dictionary (csi_t *ctx,
 	    }
 
 	    if (strcmp (type_str, CAIRO_MIME_TYPE_PNG) == 0)
-		type = MIME_TYPE_PNG;
+		mime_type = MIME_TYPE_PNG;
 	}
 
 	status = csi_object_as_file (ctx, &obj, &file);
@@ -2984,7 +3148,7 @@ _image_load_from_dictionary (csi_t *ctx,
 
 	/* XXX hook for general mime-type decoder */
 
-	switch (type) {
+	switch (mime_type) {
 	case MIME_TYPE_NONE:
 	    status = _image_read_raw (file.datum.file,
 				      format, width, height, &image);
@@ -3051,11 +3215,13 @@ static csi_status_t
 _integer (csi_t *ctx)
 {
     csi_object_t *obj;
+    int type;
 
     check (1);
 
     obj = _csi_peek_ostack (ctx, 0);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_INTEGER:
 	break;
     case CSI_OBJECT_TYPE_REAL:
@@ -3067,6 +3233,30 @@ _integer (csi_t *ctx)
     obj->type = CSI_OBJECT_TYPE_INTEGER;
 
     return CSI_STATUS_SUCCESS;
+}
+
+static csi_status_t
+_invert (csi_t *ctx)
+{
+    csi_object_t obj;
+    csi_status_t status;
+    cairo_matrix_t m;
+
+    check (1);
+
+    status = _csi_ostack_get_matrix (ctx, 0, &m);
+    if (_csi_unlikely (status))
+	return status;
+
+    cairo_matrix_invert (&m);
+
+    status = csi_matrix_new_from_matrix (ctx, &obj, &m);
+    if (_csi_unlikely (status))
+	return status;
+
+    pop (1);
+
+    return push (&obj);
 }
 
 static csi_status_t
@@ -3191,11 +3381,13 @@ static csi_status_t
 _neg (csi_t *ctx)
 {
     csi_object_t *obj;
+    int type;
 
     check (1);
 
     obj = _csi_peek_ostack (ctx, 0);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_INTEGER:
 	obj->datum.integer = -obj->datum.integer;
 	break;
@@ -3213,11 +3405,13 @@ static csi_status_t
 _not (csi_t *ctx)
 {
     csi_object_t *obj;
+    int type;
 
     check (1);
 
     obj = _csi_peek_ostack (ctx, 0);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_BOOLEAN:
 	obj->datum.boolean = ! obj->datum.boolean;
 	break;
@@ -3425,6 +3619,7 @@ static csi_status_t
 _or (csi_t *ctx)
 {
     csi_object_t *a, *b;
+    int type;
 
     check (2);
 
@@ -3434,7 +3629,8 @@ _or (csi_t *ctx)
 	return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 
     pop (2);
-    switch ((int) csi_object_get_type (a)) {
+    type = csi_object_get_type (a);
+    switch (type) {
     case CSI_OBJECT_TYPE_INTEGER:
 	return _csi_push_ostack_integer (ctx,
 					 a->datum.integer | b->datum.integer);
@@ -3828,6 +4024,7 @@ _rotate (csi_t *ctx)
     csi_object_t *obj;
     csi_status_t status;
     double theta;
+    int type;
 
     check (2);
 
@@ -3836,7 +4033,8 @@ _rotate (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_rotate (obj->datum.cr, theta);
 	break;
@@ -3875,6 +4073,7 @@ _scale (csi_t *ctx)
     csi_object_t *obj;
     csi_status_t status;
     double x, y;
+    int type;
 
     check (3);
 
@@ -3886,7 +4085,8 @@ _scale (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 2);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_scale (obj->datum.cr, x, y);
 	break;
@@ -4087,6 +4287,7 @@ _set (csi_t *ctx)
 {
     csi_object_t *key, *value, *dst;
     csi_status_t status;
+    int type;
 
     check (3);
 
@@ -4094,7 +4295,8 @@ _set (csi_t *ctx)
     key = _csi_peek_ostack (ctx, 1);
     dst = _csi_peek_ostack (ctx, 2);
 
-    switch ((int) csi_object_get_type (dst)) {
+    type = csi_object_get_type (dst);
+    switch (type) {
     case CSI_OBJECT_TYPE_DICTIONARY:
 	if (_csi_unlikely (csi_object_get_type (key) !=
 			     CSI_OBJECT_TYPE_NAME))
@@ -4250,6 +4452,7 @@ _set_extend (csi_t *ctx)
     csi_status_t status;
     csi_object_t *obj;
     long extend;
+    int type;
 
     check (2);
 
@@ -4258,7 +4461,8 @@ _set_extend (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_pattern_set_extend (cairo_get_source (obj->datum.cr),
 				  extend);
@@ -4325,6 +4529,7 @@ _set_filter (csi_t *ctx)
     csi_status_t status;
     csi_object_t *obj;
     long filter;
+    int type;
 
     check (2);
 
@@ -4333,7 +4538,8 @@ _set_filter (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_pattern_set_filter (cairo_get_source (obj->datum.cr),
 				  filter);
@@ -4507,6 +4713,7 @@ _set_matrix (csi_t *ctx)
     csi_object_t *obj;
     csi_status_t status;
     cairo_matrix_t m;
+    int type;
 
     check (2);
 
@@ -4515,7 +4722,8 @@ _set_matrix (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_set_matrix (obj->datum.cr, &m);
 	break;
@@ -4557,11 +4765,13 @@ _set_mime_data (csi_t *ctx)
     csi_object_t source;
     cairo_surface_t *surface;
     struct _mime_tag *tag;
+    int type;
 
     check (3);
 
     obj = _csi_peek_ostack (ctx, 0);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_FILE:
 	status = _csi_file_as_string (ctx, obj->datum.file, &source);
 	if (_csi_unlikely (status))
@@ -4843,6 +5053,7 @@ _transform (csi_t *ctx)
     csi_object_t *obj;
     csi_status_t status;
     cairo_matrix_t m;
+    int type;
 
     check (2);
 
@@ -4851,7 +5062,8 @@ _transform (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_transform (obj->datum.cr, &m);
 	break;
@@ -4882,6 +5094,7 @@ _translate (csi_t *ctx)
     csi_object_t *obj;
     csi_status_t status;
     double x, y;
+    int type;
 
     check (3);
 
@@ -4893,7 +5106,8 @@ _translate (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 2);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_translate (obj->datum.cr, x, y);
 	break;
@@ -4930,11 +5144,13 @@ static csi_status_t
 _show_page (csi_t *ctx)
 {
     csi_object_t *obj;
+    int type;
 
     check (1);
 
     obj = _csi_peek_ostack (ctx, 0);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_CONTEXT:
 	cairo_show_page (obj->datum.cr);
 	if (ctx->hooks.copy_page != NULL)
@@ -5026,7 +5242,6 @@ _show_text (csi_t *ctx)
 static csi_status_t
 _show_glyphs (csi_t *ctx)
 {
-    csi_object_t *obj;
     csi_array_t *array;
     csi_status_t status;
     cairo_t *cr;
@@ -5045,8 +5260,9 @@ _show_glyphs (csi_t *ctx)
     /* count glyphs */
     nglyphs = 0;
     for (i = 0; i < array->stack.len; i++) {
-	obj = &array->stack.objects[i];
-	switch ((int) csi_object_get_type (obj)) {
+	csi_object_t *obj = &array->stack.objects[i];
+	int type = csi_object_get_type (obj);
+	switch (type) {
 	case CSI_OBJECT_TYPE_ARRAY:
 	    nglyphs += obj->datum.array->stack.len;
 	    break;
@@ -5098,6 +5314,7 @@ _show_text_glyphs (csi_t *ctx)
     cairo_glyph_t stack_glyphs[256], *glyphs;
     csi_integer_t nglyphs, nclusters, i;
     long direction;
+    int type;
 
     check (5);
 
@@ -5106,7 +5323,8 @@ _show_text_glyphs (csi_t *ctx)
 	return status;
 
     obj = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (obj)) {
+    type = csi_object_get_type (obj);
+    switch (type) {
     case CSI_OBJECT_TYPE_ARRAY:
 	array = obj->datum.array;
 	nclusters = array->stack.len / 2;
@@ -5161,7 +5379,8 @@ _show_text_glyphs (csi_t *ctx)
     nglyphs = 0;
     for (i = 0; i < array->stack.len; i++) {
 	obj = &array->stack.objects[i];
-	switch ((int) csi_object_get_type (obj)) {
+	type = csi_object_get_type (obj);
+	switch (type) {
 	case CSI_OBJECT_TYPE_ARRAY:
 	    nglyphs += obj->datum.array->stack.len;
 	    break;
@@ -5342,6 +5561,10 @@ _surface (csi_t *ctx)
     }
     if (csi_dictionary_has (dict, key.datum.name)) {
 	status = csi_dictionary_get (ctx, dict, key.datum.name, &obj);
+	if (_csi_unlikely (status)) {
+	    cairo_surface_destroy (surface);
+	    return status;
+	}
 	if (csi_object_get_type (&obj) == CSI_OBJECT_TYPE_ARRAY) {
 	    csi_array_t *array = obj.datum.array;
 	    if (array->stack.len == 2) {
@@ -5456,6 +5679,7 @@ _unset (csi_t *ctx)
     csi_object_t *dst;
     csi_name_t name = 0; /* silence the compiler */
     csi_status_t status;
+    int type;
 
     check (2);
 
@@ -5464,7 +5688,8 @@ _unset (csi_t *ctx)
 	return status;
 
     dst = _csi_peek_ostack (ctx, 1);
-    switch ((int) csi_object_get_type (dst)) {
+    type = csi_object_get_type (dst);
+    switch (type) {
     case CSI_OBJECT_TYPE_DICTIONARY:
 	csi_dictionary_remove (ctx, dst->datum.dictionary, name);
 	break;
@@ -5510,6 +5735,7 @@ static csi_status_t
 _xor (csi_t *ctx)
 {
     csi_object_t *a, *b;
+    int type;
 
     check (2);
 
@@ -5519,7 +5745,8 @@ _xor (csi_t *ctx)
 	return _csi_error (CSI_STATUS_INVALID_SCRIPT);
 
     pop (2);
-    switch ((int) csi_object_get_type (a)) {
+    type = csi_object_get_type (a);
+    switch (type) {
     case CSI_OBJECT_TYPE_INTEGER:
 	return _csi_push_ostack_integer (ctx,
 					 a->datum.integer ^ b->datum.integer);
@@ -5652,7 +5879,7 @@ _defs[] = {
     { "device-to-user-distance", NULL },
     { "dict", _dict },
     { "div", _div },
-    { "dup", _dup },
+    { "dup", _duplicate },
     { "eq", _eq },
     { "exch", _exch },
     { "exec", NULL },
@@ -5679,7 +5906,7 @@ _defs[] = {
     { "image", _image },
     { "index", _index },
     { "integer", _integer },
-    { "invert", NULL },
+    { "invert", _invert },
     { "in-stroke", NULL },
     { "in-fill", NULL },
     { "known", NULL },

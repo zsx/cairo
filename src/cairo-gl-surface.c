@@ -42,8 +42,6 @@
 slim_hidden_proto (cairo_gl_context_reference);
 slim_hidden_proto (cairo_gl_context_destroy);
 
-#define ARRAY_SIZE(array) (sizeof (array) / sizeof (array[0]))
-
 #define BIAS .375
 
 static inline float
@@ -367,7 +365,7 @@ _cairo_gl_set_operator (cairo_gl_surface_t *dst, cairo_operator_t op)
     };
     GLenum src_factor, dst_factor;
 
-    assert (op < ARRAY_SIZE (blend_factors));
+    assert (op < ARRAY_LENGTH (blend_factors));
 
     src_factor = blend_factors[op].src;
     dst_factor = blend_factors[op].dst;
@@ -666,28 +664,10 @@ _cairo_gl_surface_get_image (cairo_gl_surface_t      *surface,
 			     cairo_rectangle_int_t   *rect_out)
 {
     cairo_image_surface_t *image;
-    cairo_rectangle_int_t extents;
     GLenum err;
-    char *temp_data;
-    int y;
-    unsigned int cpp;
     GLenum format, type;
     cairo_format_t cairo_format;
-
-    extents.x = 0;
-    extents.y = 0;
-    extents.width  = surface->width;
-    extents.height = surface->height;
-
-    if (interest != NULL) {
-	if (! _cairo_rectangle_intersect (&extents, interest)) {
-	    *image_out = NULL;
-	    return CAIRO_STATUS_SUCCESS;
-	}
-    }
-
-    if (rect_out != NULL)
-	*rect_out = extents;
+    unsigned int cpp;
 
     /* Want to use a switch statement here but the compiler gets whiny. */
     if (surface->base.content == CAIRO_CONTENT_COLOR_ALPHA) {
@@ -706,14 +686,14 @@ _cairo_gl_surface_get_image (cairo_gl_surface_t      *surface,
 	type = GL_UNSIGNED_BYTE;
 	cpp = 1;
     } else {
-	fprintf (stderr, "get_image fallback: %d\n", surface->base.content);
+	ASSERT_NOT_REACHED;
 	return CAIRO_INT_STATUS_UNSUPPORTED;
     }
 
     image = (cairo_image_surface_t*)
 	cairo_image_surface_create (cairo_format,
-				    extents.width, extents.height);
-    if (image->base.status)
+				    interest->width, interest->height);
+    if (unlikely (image->base.status))
 	return image->base.status;
 
     /* This is inefficient, as we'd rather just read the thing without making
@@ -722,30 +702,18 @@ _cairo_gl_surface_get_image (cairo_gl_surface_t      *surface,
      */
     _cairo_gl_set_destination (surface);
 
-    /* Read the data to a temporary as GL gives us bottom-to-top data
-     * screen-wise, and we want top-to-bottom.
-     */
-    temp_data = malloc (extents.width * extents.height * cpp);
-    if (temp_data == NULL)
-	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
-
     glPixelStorei (GL_PACK_ALIGNMENT, 1);
-    glReadPixels (extents.x, extents.y,
-		 extents.width, extents.height,
-		 format, type, temp_data);
-
-    for (y = 0; y < extents.height; y++) {
-	memcpy ((char *) image->data + y * image->stride,
-		temp_data + y * extents.width * cpp,
-		extents.width * cpp);
-    }
-    free (temp_data);
-
-    *image_out = image;
+    glPixelStorei (GL_PACK_ROW_LENGTH, image->stride / cpp);
+    glReadPixels (interest->x, interest->y,
+		  interest->width, interest->height,
+		  format, type, image->data);
 
     while ((err = glGetError ()))
 	fprintf (stderr, "GL error 0x%08x\n", (int) err);
 
+    *image_out = image;
+    if (rect_out != NULL)
+	*rect_out = *interest;
     return CAIRO_STATUS_SUCCESS;
 }
 
@@ -756,8 +724,6 @@ _cairo_gl_surface_finish (void *abstract_surface)
 
     glDeleteFramebuffersEXT (1, &surface->fb);
     glDeleteTextures (1, &surface->tex);
-    if (surface->depth_stencil_tex)
-	glDeleteTextures (1, &surface->depth_stencil_tex);
 
     if (surface->ctx->current_target == surface)
 	surface->ctx->current_target = NULL;
@@ -814,8 +780,8 @@ _cairo_gl_surface_release_dest_image (void		      *abstract_surface,
 					   0, 0,
 					   image->width, image->height,
 					   image_rect->x, image_rect->y);
-    if (status)
-	status = _cairo_surface_set_error (abstract_surface, status);
+    /* as we created the image, its format should be directly applicable */
+    assert (status == CAIRO_STATUS_SUCCESS);
 
     cairo_surface_destroy (&image->base);
 }
@@ -1512,6 +1478,23 @@ _cairo_gl_surface_composite_trapezoids (cairo_operator_t op,
     cairo_surface_pattern_t traps_pattern;
     cairo_int_status_t status;
 
+    if (! _cairo_gl_operator_is_supported (op))
+	return CAIRO_INT_STATUS_UNSUPPORTED;
+
+    if (_cairo_surface_check_span_renderer (op,pattern,&dst->base, antialias)) {
+	status =
+	    _cairo_surface_composite_trapezoids_as_polygon (&dst->base,
+							    op, pattern,
+							    antialias,
+							    src_x, src_y,
+							    dst_x, dst_y,
+							    width, height,
+							    traps, num_traps,
+							    clip_region);
+	if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+	    return status;
+    }
+
     status = _cairo_gl_get_traps_pattern (dst,
 					  dst_x, dst_y, width, height,
 					  traps, num_traps, antialias,
@@ -1539,7 +1522,10 @@ _cairo_gl_surface_fill_rectangles (void			   *abstract_surface,
 				   cairo_rectangle_int_t   *rects,
 				   int			    num_rects)
 {
+#define N_STACK_RECTS 4
     cairo_gl_surface_t *surface = abstract_surface;
+    GLfloat vertices_stack[N_STACK_RECTS*4*2];
+    GLfloat colors_stack[N_STACK_RECTS*4*4];
     cairo_gl_context_t *ctx;
     int i;
     GLfloat *vertices;
@@ -1553,23 +1539,32 @@ _cairo_gl_surface_fill_rectangles (void			   *abstract_surface,
     _cairo_gl_set_destination (surface);
     _cairo_gl_set_operator (surface, op);
 
-    vertices = _cairo_malloc_ab (num_rects, sizeof (GLfloat) * 4 * 2);
-    colors = _cairo_malloc_ab (num_rects, sizeof (GLfloat) * 4 * 4);
-    if (!vertices || !colors) {
-	_cairo_gl_context_release (ctx);
-	free (vertices);
-	free (colors);
-	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
+    if (num_rects > N_STACK_RECTS) {
+	vertices = _cairo_malloc_ab (num_rects, sizeof (GLfloat) * 4 * 2);
+	colors = _cairo_malloc_ab (num_rects, sizeof (GLfloat) * 4 * 4);
+	if (!vertices || !colors) {
+	    _cairo_gl_context_release (ctx);
+	    free (vertices);
+	    free (colors);
+	    return _cairo_error (CAIRO_STATUS_NO_MEMORY);
+	}
+    } else {
+	vertices = vertices_stack;
+	colors = colors_stack;
     }
 
     /* This should be loaded in as either a blend constant and an operator
      * setup specific to this, or better, a fragment shader constant.
      */
-    for (i = 0; i < num_rects * 4; i++) {
-	colors[i * 4 + 0] = color->red * color->alpha;
-	colors[i * 4 + 1] = color->green * color->alpha;
-	colors[i * 4 + 2] = color->blue * color->alpha;
-	colors[i * 4 + 3] = color->alpha;
+    colors[0] = color->red * color->alpha;
+    colors[1] = color->green * color->alpha;
+    colors[2] = color->blue * color->alpha;
+    colors[3] = color->alpha;
+    for (i = 1; i < num_rects * 4; i++) {
+	colors[i*4 + 0] = colors[0];
+	colors[i*4 + 1] = colors[1];
+	colors[i*4 + 2] = colors[2];
+	colors[i*4 + 3] = colors[3];
     }
 
     for (i = 0; i < num_rects; i++) {
@@ -1587,6 +1582,7 @@ _cairo_gl_surface_fill_rectangles (void			   *abstract_surface,
     glEnableClientState (GL_VERTEX_ARRAY);
     glColorPointer (4, GL_FLOAT, sizeof (GLfloat)*4, colors);
     glEnableClientState (GL_COLOR_ARRAY);
+
     glDrawArrays (GL_QUADS, 0, 4 * num_rects);
 
     glDisableClientState (GL_COLOR_ARRAY);
@@ -1594,10 +1590,13 @@ _cairo_gl_surface_fill_rectangles (void			   *abstract_surface,
     glDisable (GL_BLEND);
 
     _cairo_gl_context_release (ctx);
-    free (vertices);
-    free (colors);
+    if (vertices != vertices_stack)
+	free (vertices);
+    if (colors != colors_stack)
+	free (colors);
 
     return CAIRO_STATUS_SUCCESS;
+#undef N_STACK_RECTS
 }
 
 typedef struct _cairo_gl_surface_span_renderer {
@@ -1841,8 +1840,7 @@ static cairo_bool_t
 _cairo_gl_surface_check_span_renderer (cairo_operator_t	  op,
 				       const cairo_pattern_t  *pattern,
 				       void			 *abstract_dst,
-				       cairo_antialias_t	  antialias,
-				       const cairo_composite_rectangles_t *rects)
+				       cairo_antialias_t	  antialias)
 {
     if (! _cairo_gl_operator_is_supported (op))
 	return FALSE;
@@ -1855,7 +1853,6 @@ _cairo_gl_surface_check_span_renderer (cairo_operator_t	  op,
     (void) pattern;
     (void) abstract_dst;
     (void) antialias;
-    (void) rects;
 }
 
 static cairo_span_renderer_t *

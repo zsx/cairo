@@ -318,11 +318,13 @@ _cairo_win32_printing_surface_get_ctm_clip_box (cairo_win32_surface_t *surface,
     XFORM xform;
 
     _cairo_matrix_to_win32_xform (&surface->ctm, &xform);
+    if (!ModifyWorldTransform (surface->dc, &xform, MWT_LEFTMULTIPLY))
+	return _cairo_win32_print_gdi_error ("_cairo_win32_printing_surface_get_clip_box:ModifyWorldTransform");
+    GetClipBox (surface->dc, clip);
+
+    _cairo_matrix_to_win32_xform (&surface->gdi_ctm, &xform);
     if (!SetWorldTransform (surface->dc, &xform))
 	return _cairo_win32_print_gdi_error ("_cairo_win32_printing_surface_get_clip_box:SetWorldTransform");
-    GetClipBox (surface->dc, clip);
-    if (!ModifyWorldTransform (surface->dc, &xform, MWT_IDENTITY))
-	return _cairo_win32_print_gdi_error ("_cairo_win32_printing_surface_get_clip_box:ModifyWorldTransform");
 
     return CAIRO_STATUS_SUCCESS;
 }
@@ -385,10 +387,10 @@ _cairo_win32_printing_surface_paint_meta_pattern (cairo_win32_surface_t   *surfa
 	return status;
 
     if (extend == CAIRO_EXTEND_REPEAT || extend == CAIRO_EXTEND_REFLECT) {
-	left = (int) floor (clip.left / _cairo_fixed_to_double (bbox.p2.x - bbox.p1.x));
-	right = (int) ceil (clip.right / _cairo_fixed_to_double (bbox.p2.x - bbox.p1.x));
-	top = (int) floor (clip.top / _cairo_fixed_to_double (bbox.p2.y - bbox.p1.y));
-	bottom = (int) ceil (clip.bottom / _cairo_fixed_to_double (bbox.p2.y - bbox.p1.y));
+	left = floor (clip.left / _cairo_fixed_to_double (bbox.p2.x - bbox.p1.x));
+	right = ceil (clip.right / _cairo_fixed_to_double (bbox.p2.x - bbox.p1.x));
+	top = floor (clip.top / _cairo_fixed_to_double (bbox.p2.y - bbox.p1.y));
+	bottom = ceil (clip.bottom / _cairo_fixed_to_double (bbox.p2.y - bbox.p1.y));
     } else {
 	left = 0;
 	right = 1;
@@ -693,10 +695,10 @@ _cairo_win32_printing_surface_paint_image_pattern (cairo_win32_surface_t   *surf
 
     GetClipBox (surface->dc, &clip);
     if (extend == CAIRO_EXTEND_REPEAT || extend == CAIRO_EXTEND_REFLECT) {
-	left = (int) floor((double)clip.left/opaque_image->width);
-	right = (int) ceil((double)clip.right/opaque_image->width);
-	top = (int) floor((double)clip.top/opaque_image->height);
-	bottom = (int) ceil((double)clip.bottom/opaque_image->height);
+	left = floor ( clip.left / (double) opaque_image->width);
+	right = ceil (clip.right / (double) opaque_image->width);
+	top = floor (clip.top / (double) opaque_image->height);
+	bottom = ceil (clip.bottom / (double) opaque_image->height);
     } else {
 	left = 0;
 	right = 1;
@@ -813,8 +815,8 @@ _cairo_win32_printing_surface_paint_linear_pattern (cairo_win32_surface_t *surfa
     GetClipBox (surface->dc, &clip);
 
     if (extend == CAIRO_EXTEND_REPEAT || extend == CAIRO_EXTEND_REFLECT) {
-	range_start = (int) floor(clip.left/d);
-	range_stop = (int) ceil(clip.right/d);
+	range_start = floor (clip.left / d);
+	range_stop = ceil (clip.right / d);
     } else {
 	range_start = 0;
 	range_stop = 1;
@@ -1304,7 +1306,7 @@ _cairo_win32_printing_surface_stroke (void			*abstract_surface,
     xform.eDx = 0.0f;
     xform.eDy = 0.0f;
 
-    if (!SetWorldTransform (surface->dc, &xform))
+    if (!ModifyWorldTransform (surface->dc, &xform, MWT_LEFTMULTIPLY))
 	return _cairo_win32_print_gdi_error ("_win32_surface_stroke:SetWorldTransform");
 
     if (source->type == CAIRO_PATTERN_TYPE_SOLID) {
@@ -1316,7 +1318,8 @@ _cairo_win32_printing_surface_stroke (void			*abstract_surface,
 	    return _cairo_win32_print_gdi_error ("_win32_surface_stroke:SelectClipPath");
 
 	/* Return to device space to paint the pattern */
-	if (!ModifyWorldTransform (surface->dc, &xform, MWT_IDENTITY))
+	_cairo_matrix_to_win32_xform (&surface->gdi_ctm, &xform);
+	if (!SetWorldTransform (surface->dc, &xform))
 	    return _cairo_win32_print_gdi_error ("_win32_surface_stroke:ModifyWorldTransform");
 	status = _cairo_win32_printing_surface_paint_pattern (surface, source);
     }
@@ -1608,26 +1611,36 @@ _cairo_win32_printing_surface_start_page (void *abstract_surface)
 
     SetGraphicsMode (surface->dc, GM_ADVANCED);
     GetWorldTransform(surface->dc, &xform);
-    surface->ctm.xx = xform.eM11;
-    surface->ctm.xy = xform.eM21;
-    surface->ctm.yx = xform.eM12;
-    surface->ctm.yy = xform.eM22;
-    surface->ctm.x0 = xform.eDx;
-    surface->ctm.y0 = xform.eDy;
-    surface->has_ctm = !_cairo_matrix_is_identity (&surface->ctm);
 
+    if (xform.eM11 < 1 && xform.eM22 < 1) {
+	cairo_matrix_init_identity (&surface->ctm);
+	surface->gdi_ctm.xy = xform.eM21;
+	surface->gdi_ctm.yx = xform.eM12;
+	surface->gdi_ctm.yy = xform.eM22;
+	surface->gdi_ctm.x0 = xform.eDx;
+	surface->gdi_ctm.y0 = xform.eDy;
+    } else {
+	surface->ctm.xx = xform.eM11;
+	surface->ctm.xy = xform.eM21;
+	surface->ctm.yx = xform.eM12;
+	surface->ctm.yy = xform.eM22;
+	surface->ctm.x0 = xform.eDx;
+	surface->ctm.y0 = xform.eDy;
+	cairo_matrix_init_identity (&surface->gdi_ctm);
+	if (!ModifyWorldTransform (surface->dc, NULL, MWT_IDENTITY))
+	    return _cairo_win32_print_gdi_error ("_cairo_win32_printing_surface_start_page:ModifyWorldTransform");
+    }
+
+    surface->has_ctm = !_cairo_matrix_is_identity (&surface->ctm);
     inverse_ctm = surface->ctm;
     status = cairo_matrix_invert (&inverse_ctm);
     if (status)
 	return status;
 
-    x_res = (double) GetDeviceCaps(surface->dc, LOGPIXELSX);
-    y_res = (double) GetDeviceCaps(surface->dc, LOGPIXELSY);
+    x_res = GetDeviceCaps (surface->dc, LOGPIXELSX);
+    y_res = GetDeviceCaps (surface->dc, LOGPIXELSY);
     cairo_matrix_transform_distance (&inverse_ctm, &x_res, &y_res);
     _cairo_surface_set_resolution (&surface->base, x_res, y_res);
-
-    if (!ModifyWorldTransform (surface->dc, NULL, MWT_IDENTITY))
-	return _cairo_win32_print_gdi_error ("_cairo_win32_printing_surface_start_page:ModifyWorldTransform");
 
     SaveDC (surface->dc); /* Then save Cairo's known-good clip state, so the clip path can be reset */
 
@@ -1741,7 +1754,7 @@ static const cairo_surface_backend_t cairo_win32_printing_surface_backend = {
     NULL, /* release_source_image */
     NULL, /* acquire_dest_image */
     NULL, /* release_dest_image */
-    _cairo_win32_surface_clone_similar,
+    NULL, /* clone_similar */
     NULL, /* composite */
     NULL, /* fill_rectangles */
     NULL, /* composite_trapezoids */

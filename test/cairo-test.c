@@ -26,7 +26,6 @@
  */
 
 #define _GNU_SOURCE 1	/* for feenableexcept() et al */
-#define _POSIX_C_SOURCE 200112L /* for flockfile() et al */
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -1006,13 +1005,6 @@ REPEAT:
 	goto UNWIND_CAIRO;
     }
 
-    if (cairo_status (cr) != CAIRO_STATUS_SUCCESS) {
-	cairo_test_log (ctx, "Error: Function under test left cairo status in an error state: %s\n",
-			cairo_status_to_string (cairo_status (cr)));
-	ret = CAIRO_TEST_FAILURE;
-	goto UNWIND_CAIRO;
-    }
-
 #if HAVE_MEMFAULT
     if (MEMFAULT_COUNT_FAULTS () - last_fault_count > 0 &&
 	MEMFAULT_HAS_FAULTS ())
@@ -1381,6 +1373,13 @@ REPEAT:
 	cairo_surface_destroy (diff_image);
     }
 
+    if (cairo_status (cr) != CAIRO_STATUS_SUCCESS) {
+	cairo_test_log (ctx, "Error: Function under test left cairo status in an error state: %s\n",
+			cairo_status_to_string (cairo_status (cr)));
+	ret = CAIRO_TEST_FAILURE;
+	goto UNWIND_CAIRO;
+    }
+
 UNWIND_CAIRO:
     if (test_filename != NULL) {
 	free (test_filename);
@@ -1646,7 +1645,7 @@ _cairo_test_context_run_for_target (cairo_test_context_t *ctx,
 	}
 	fflush (stdout);
     } else {
-#if _POSIX_THREAD_SAFE_FUNCTIONS
+#if HAVE_FLOCKFILE && HAVE_FUNLOCKFILE
 	flockfile (stdout);
 #endif
 	printf ("%s.%s.%s %d [%d]:\t",
@@ -1678,7 +1677,7 @@ _cairo_test_context_run_for_target (cairo_test_context_t *ctx,
 	}
 
 	fflush (stdout);
-#if _POSIX_THREAD_SAFE_FUNCTIONS
+#if  HAVE_FLOCKFILE && HAVE_FUNLOCKFILE
 	funlockfile (stdout);
 #endif
     }

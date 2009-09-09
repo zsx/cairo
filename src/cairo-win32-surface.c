@@ -338,6 +338,8 @@ _cairo_win32_surface_create_for_dc (HDC             original_dc,
     if (surface == NULL)
 	return _cairo_surface_create_in_error (_cairo_error (CAIRO_STATUS_NO_MEMORY));
 
+    surface->clip_region = NULL;
+
     status = _create_dc_and_bitmap (surface, original_dc, format,
 				    width, height,
 				    &bits, &rowstride);
@@ -431,61 +433,6 @@ _cairo_win32_surface_create_similar (void	    *abstract_src,
 }
 
 cairo_status_t
-_cairo_win32_surface_clone_similar (void *abstract_surface,
-				    cairo_surface_t *src,
-				    cairo_content_t content,
-				    int src_x,
-				    int src_y,
-				    int width,
-				    int height,
-				    int *clone_offset_x,
-				    int *clone_offset_y,
-				    cairo_surface_t **clone_out)
-{
-    cairo_content_t src_content;
-    cairo_surface_t *new_surface;
-    cairo_status_t status;
-    cairo_surface_pattern_t pattern;
-
-    src_content = src->content & content;
-    new_surface =
-	_cairo_win32_surface_create_similar_internal (abstract_surface,
-						      src_content,
-						      width, height,
-						      FALSE);
-    if (new_surface == NULL)
-	return CAIRO_INT_STATUS_UNSUPPORTED;
-
-    status = new_surface->status;
-    if (status)
-	return status;
-
-    _cairo_pattern_init_for_surface (&pattern, src);
-
-    status = _cairo_surface_composite (CAIRO_OPERATOR_SOURCE,
-				       &pattern.base,
-				       NULL,
-				       new_surface,
-				       src_x, src_y,
-				       0, 0,
-				       0, 0,
-				       width, height,
-				       NULL);
-
-    _cairo_pattern_fini (&pattern.base);
-
-    if (status == CAIRO_STATUS_SUCCESS) {
-	*clone_offset_x = src_x;
-	*clone_offset_y = src_y;
-	*clone_out = new_surface;
-    } else
-	cairo_surface_destroy (new_surface);
-
-    return status;
-}
-
-
-cairo_status_t
 _cairo_win32_surface_finish (void *abstract_surface)
 {
     cairo_win32_surface_t *surface = abstract_surface;
@@ -570,13 +517,12 @@ _cairo_win32_surface_acquire_source_image (void                    *abstract_sur
 					   void                   **image_extra)
 {
     cairo_win32_surface_t *surface = abstract_surface;
-    cairo_win32_surface_t *local = NULL;
+    cairo_win32_surface_t *local;
     cairo_status_t status;
 
     if (surface->image) {
 	*image_out = (cairo_image_surface_t *)surface->image;
 	*image_extra = NULL;
-
 	return CAIRO_STATUS_SUCCESS;
     }
 
@@ -588,7 +534,6 @@ _cairo_win32_surface_acquire_source_image (void                    *abstract_sur
 
     *image_out = (cairo_image_surface_t *)local->image;
     *image_extra = local;
-
     return CAIRO_STATUS_SUCCESS;
 }
 
@@ -613,61 +558,28 @@ _cairo_win32_surface_acquire_dest_image (void                    *abstract_surfa
     cairo_win32_surface_t *surface = abstract_surface;
     cairo_win32_surface_t *local = NULL;
     cairo_status_t status;
-    RECT clip_box;
-    int x1, y1, x2, y2;
 
     if (surface->image) {
 	GdiFlush();
 
-	image_rect->x = 0;
-	image_rect->y = 0;
-	image_rect->width = surface->extents.width;
-	image_rect->height = surface->extents.height;
-
-	*image_out = (cairo_image_surface_t *)surface->image;
+	*image_out = (cairo_image_surface_t *) surface->image;
 	*image_extra = NULL;
-
-	return CAIRO_STATUS_SUCCESS;
-    }
-
-    if (GetClipBox (surface->dc, &clip_box) == ERROR)
-	return _cairo_win32_print_gdi_error ("_cairo_win3_surface_acquire_dest_image");
-
-    x1 = clip_box.left;
-    x2 = clip_box.right;
-    y1 = clip_box.top;
-    y2 = clip_box.bottom;
-
-    if (interest_rect->x > x1)
-	x1 = interest_rect->x;
-    if (interest_rect->y > y1)
-	y1 = interest_rect->y;
-    if ((int) (interest_rect->x + interest_rect->width) < x2)
-	x2 = interest_rect->x + interest_rect->width;
-    if ((int) (interest_rect->y + interest_rect->height) < y2)
-	y2 = interest_rect->y + interest_rect->height;
-
-    if (x1 >= x2 || y1 >= y2) {
-	*image_out = NULL;
-	*image_extra = NULL;
-
+	*image_rect = surface->extents;
 	return CAIRO_STATUS_SUCCESS;
     }
 
     status = _cairo_win32_surface_get_subimage (abstract_surface,
-						x1, y1, x2 - x1, y2 - y1,
+						interest_rect->x,
+						interest_rect->y,
+						interest_rect->width,
+						interest_rect->height,
 						&local);
     if (status)
 	return status;
 
-    *image_out = (cairo_image_surface_t *)local->image;
+    *image_out = (cairo_image_surface_t *) local->image;
     *image_extra = local;
-
-    image_rect->x = x1;
-    image_rect->y = y1;
-    image_rect->width = x2 - x1;
-    image_rect->height = y2 - y1;
-
+    *image_rect = *interest_rect;
     return CAIRO_STATUS_SUCCESS;
 }
 
@@ -1743,6 +1655,7 @@ cairo_win32_surface_create (HDC hdc)
 	return _cairo_surface_create_in_error (_cairo_error (CAIRO_STATUS_NO_MEMORY));
     }
 
+    surface->clip_region = NULL;
     surface->image = NULL;
     surface->format = format;
 
@@ -2041,14 +1954,12 @@ static cairo_bool_t
 _cairo_win32_surface_check_span_renderer (cairo_operator_t	  op,
 					  const cairo_pattern_t  *pattern,
 					  void			 *abstract_dst,
-					  cairo_antialias_t	  antialias,
-					  const cairo_composite_rectangles_t *rects)
+					  cairo_antialias_t	  antialias)
 {
     (void) op;
     (void) pattern;
     (void) abstract_dst;
     (void) antialias;
-    (void) rects;
     return TRUE;
 }
 
@@ -2106,7 +2017,7 @@ static const cairo_surface_backend_t cairo_win32_surface_backend = {
     _cairo_win32_surface_release_source_image,
     _cairo_win32_surface_acquire_dest_image,
     _cairo_win32_surface_release_dest_image,
-    _cairo_win32_surface_clone_similar,
+    NULL, /* clone similar */
     _cairo_win32_surface_composite,
     _cairo_win32_surface_fill_rectangles,
     NULL, /* composite_trapezoids */

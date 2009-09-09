@@ -714,7 +714,7 @@ _path_covers_bbox (cairo_ps_surface_t *surface,
 {
     cairo_box_t box;
 
-    if (_cairo_path_fixed_is_rectangle (path, &box)) {
+    if (_cairo_path_fixed_is_box (path, &box)) {
 	cairo_rectangle_int_t rect;
 
 	_cairo_box_round_to_rectangle (&box, &rect);
@@ -1919,9 +1919,13 @@ _cairo_ps_surface_emit_base85_string (cairo_ps_surface_t    *surface,
     _cairo_output_stream_write (base85_stream, data, length);
 
     status = _cairo_output_stream_destroy (base85_stream);
+
+    /* Mark end of base85 data */
+    _cairo_output_stream_printf (string_array_stream, "~>");
     status2 = _cairo_output_stream_destroy (string_array_stream);
     if (status == CAIRO_STATUS_SUCCESS)
 	status = status2;
+
 
     return status;
 }
@@ -2273,12 +2277,14 @@ _cairo_ps_surface_emit_meta_surface (cairo_ps_surface_t  *surface,
     double old_width, old_height;
     cairo_matrix_t old_cairo_to_ps;
     cairo_content_t old_content;
+    cairo_rectangle_int_t old_page_bbox;
     cairo_box_t bbox;
     cairo_status_t status;
 
     old_content = surface->content;
     old_width = surface->width;
     old_height = surface->height;
+    old_page_bbox = surface->page_bbox;
     old_cairo_to_ps = surface->cairo_to_ps;
 
     status =
@@ -2288,9 +2294,18 @@ _cairo_ps_surface_emit_meta_surface (cairo_ps_surface_t  *surface,
     if (unlikely (status))
 	return status;
 
-    /* XXX is this still necessary? */
+#if DEBUG_PS
+    _cairo_output_stream_printf (surface->stream,
+				 "%% _cairo_ps_surface_emit_meta_surface (%f, %f), (%f, %f)\n",
+				 _cairo_fixed_to_double (bbox.p1.x),
+				 _cairo_fixed_to_double (bbox.p1.y),
+				 _cairo_fixed_to_double (bbox.p2.x),
+				 _cairo_fixed_to_double (bbox.p2.y));
+#endif
+
     surface->width = _cairo_fixed_to_double (bbox.p2.x - bbox.p1.x);
     surface->height = _cairo_fixed_to_double (bbox.p2.y - bbox.p1.y);
+    _cairo_box_round_to_rectangle (&bbox, &surface->page_bbox);
 
     surface->current_pattern_is_solid_color = FALSE;
     _cairo_pdf_operators_reset (&surface->pdf_operators);
@@ -2302,9 +2317,11 @@ _cairo_ps_surface_emit_meta_surface (cairo_ps_surface_t  *surface,
     if (cairo_surface_get_content (meta_surface) == CAIRO_CONTENT_COLOR) {
 	surface->content = CAIRO_CONTENT_COLOR;
 	_cairo_output_stream_printf (surface->stream,
-				     "  0 g 0 0 %f %f rectfill\n",
-				     surface->width,
-				     surface->height);
+				     "  0 g %d %d %d %d rectfill\n",
+				     surface->page_bbox.x,
+				     surface->page_bbox.y,
+				     surface->page_bbox.width,
+				     surface->page_bbox.height);
     }
 
     status = _cairo_meta_surface_replay_region (meta_surface, &surface->base,
@@ -2321,6 +2338,7 @@ _cairo_ps_surface_emit_meta_surface (cairo_ps_surface_t  *surface,
     surface->content = old_content;
     surface->width = old_width;
     surface->height = old_height;
+    surface->page_bbox = old_page_bbox;
     surface->current_pattern_is_solid_color = FALSE;
     _cairo_pdf_operators_reset (&surface->pdf_operators);
     surface->cairo_to_ps = old_cairo_to_ps;
@@ -2511,6 +2529,35 @@ _cairo_ps_surface_release_surface (cairo_ps_surface_t      *surface,
     surface->image = NULL;
 }
 
+static void
+_path_fixed_init_rectangle (cairo_path_fixed_t *path,
+			    cairo_rectangle_int_t *rect)
+{
+    cairo_status_t status;
+
+    _cairo_path_fixed_init (path);
+
+    status = _cairo_path_fixed_move_to (path,
+					_cairo_fixed_from_int (rect->x),
+					_cairo_fixed_from_int (rect->y));
+    assert (status == CAIRO_STATUS_SUCCESS);
+    status = _cairo_path_fixed_rel_line_to (path,
+					    _cairo_fixed_from_int (rect->width),
+					    _cairo_fixed_from_int (0));
+    assert (status == CAIRO_STATUS_SUCCESS);
+    status = _cairo_path_fixed_rel_line_to (path,
+					    _cairo_fixed_from_int (0),
+					    _cairo_fixed_from_int (rect->height));
+    assert (status == CAIRO_STATUS_SUCCESS);
+    status = _cairo_path_fixed_rel_line_to (path,
+					    _cairo_fixed_from_int (-rect->width),
+					    _cairo_fixed_from_int (0));
+    assert (status == CAIRO_STATUS_SUCCESS);
+
+    status = _cairo_path_fixed_close_path (path);
+    assert (status == CAIRO_STATUS_SUCCESS);
+}
+
 static cairo_status_t
 _cairo_ps_surface_paint_surface (cairo_ps_surface_t      *surface,
 				 cairo_surface_pattern_t *pattern,
@@ -2520,6 +2567,7 @@ _cairo_ps_surface_paint_surface (cairo_ps_surface_t      *surface,
     cairo_status_t status;
     int width, height;
     cairo_matrix_t cairo_p2d, ps_p2d;
+    cairo_path_fixed_t path;
     int origin_x = 0;
     int origin_y = 0;
 
@@ -2528,6 +2576,14 @@ _cairo_ps_surface_paint_surface (cairo_ps_surface_t      *surface,
 						extents,
 						&width, &height,
 						&origin_x, &origin_y);
+    if (unlikely (status))
+	return status;
+
+    _path_fixed_init_rectangle (&path, extents);
+    status = _cairo_pdf_operators_clip (&surface->pdf_operators,
+					&path,
+					CAIRO_FILL_RULE_WINDING);
+    _cairo_path_fixed_fini (&path);
     if (unlikely (status))
 	return status;
 
@@ -2972,9 +3028,9 @@ _cairo_ps_surface_emit_linear_pattern (cairo_ps_surface_t     *surface,
 	dx = fabs (x2 - x1);
 	dy = fabs (y2 - y1);
 	if (dx > 1e-6)
-	    x_rep = (int) ceil (surface->width/dx);
+	    x_rep = ceil (surface->width/dx);
 	if (dy > 1e-6)
-	    y_rep = (int) ceil (surface->height/dy);
+	    y_rep = ceil (surface->height/dy);
 
 	repeat_end = MAX (x_rep, y_rep);
 	repeat_begin = -repeat_end;
@@ -3214,8 +3270,8 @@ _cairo_ps_surface_get_extents (void		       *abstract_surface,
      * mention the aribitray limitation of width to a short(!). We
      * may need to come up with a better interface for get_extents.
      */
-    rectangle->width  = (int) ceil (surface->width);
-    rectangle->height = (int) ceil (surface->height);
+    rectangle->width  = ceil (surface->width);
+    rectangle->height = ceil (surface->height);
 
     return TRUE;
 }
@@ -3229,21 +3285,6 @@ _cairo_ps_surface_get_font_options (void                  *abstract_surface,
     cairo_font_options_set_hint_style (options, CAIRO_HINT_STYLE_NONE);
     cairo_font_options_set_hint_metrics (options, CAIRO_HINT_METRICS_OFF);
     cairo_font_options_set_antialias (options, CAIRO_ANTIALIAS_GRAY);
-}
-
-static cairo_bool_t
-_rectangle_intersect_clip (cairo_rectangle_int_t *extents, cairo_clip_t *clip)
-{
-    const cairo_rectangle_int_t *clip_extents;
-
-    clip_extents = NULL;
-    if (clip != NULL)
-	clip_extents = _cairo_clip_get_extents (clip);
-
-    if (clip_extents != NULL)
-	return _cairo_rectangle_intersect (extents, clip_extents);
-
-    return TRUE;
 }
 
 static cairo_int_status_t
@@ -3267,8 +3308,13 @@ _cairo_ps_surface_paint (void			*abstract_surface,
 				 "%% _cairo_ps_surface_paint\n");
 #endif
 
-    extents = surface->page_bbox;
-    if (! _rectangle_intersect_clip (&extents, clip))
+    status = _cairo_surface_paint_extents (&surface->base,
+					   op, source, clip,
+					   &extents);
+    if (unlikely (status))
+	return status;
+
+    if (! _cairo_rectangle_intersect (&extents, &surface->page_bbox))
 	return CAIRO_STATUS_SUCCESS;
 
     status = _cairo_surface_clipper_set_clip (&surface->clipper, clip);
@@ -3329,8 +3375,16 @@ _cairo_ps_surface_stroke (void			*abstract_surface,
 				 "%% _cairo_ps_surface_stroke\n");
 #endif
 
-    extents = surface->page_bbox;
-    if (! _rectangle_intersect_clip (&extents, clip))
+    status = _cairo_surface_stroke_extents (&surface->base,
+					    op, source,
+					    path, style,
+					    ctm, ctm_inverse,
+					    tolerance, antialias,
+					    clip, &extents);
+    if (unlikely (status))
+	return status;
+
+    if (! _cairo_rectangle_intersect (&extents, &surface->page_bbox))
 	return CAIRO_STATUS_SUCCESS;
 
     status = _cairo_surface_clipper_set_clip (&surface->clipper, clip);
@@ -3375,13 +3429,20 @@ _cairo_ps_surface_fill (void		*abstract_surface,
 				 "%% _cairo_ps_surface_fill\n");
 #endif
 
-    extents = surface->page_bbox;
-    if (! _rectangle_intersect_clip (&extents, clip))
-	return CAIRO_STATUS_SUCCESS;
-
     status = _cairo_pdf_operators_flush (&surface->pdf_operators);
     if (unlikely (status))
 	return status;
+
+    status = _cairo_surface_fill_extents (&surface->base,
+					  op, source,
+					  path, fill_rule,
+					  tolerance, antialias,
+					  clip, &extents);
+    if (unlikely (status))
+	return status;
+
+    if (! _cairo_rectangle_intersect (&extents, &surface->page_bbox))
+	return CAIRO_STATUS_SUCCESS;
 
     status = _cairo_surface_clipper_set_clip (&surface->clipper, clip);
     if (unlikely (status))
@@ -3450,8 +3511,15 @@ _cairo_ps_surface_show_glyphs (void		     *abstract_surface,
     if (num_glyphs <= 0)
         return CAIRO_STATUS_SUCCESS;
 
-    extents = surface->page_bbox;
-    if (! _rectangle_intersect_clip (&extents, clip))
+    status = _cairo_surface_glyphs_extents (&surface->base,
+					    op, source,
+					    glyphs, num_glyphs,
+					    scaled_font,
+					    clip, &extents);
+    if (unlikely (status))
+	return status;
+
+    if (! _cairo_rectangle_intersect (&extents, &surface->page_bbox))
 	return CAIRO_STATUS_SUCCESS;
 
     status = _cairo_surface_clipper_set_clip (&surface->clipper, clip);
@@ -3497,15 +3565,15 @@ _cairo_ps_surface_set_bounding_box (void		*abstract_surface,
     int x1, y1, x2, y2;
 
     if (surface->eps) {
-	x1 = (int) floor (_cairo_fixed_to_double (bbox->p1.x));
-	y1 = (int) floor (surface->height - _cairo_fixed_to_double (bbox->p2.y));
-	x2 = (int) ceil (_cairo_fixed_to_double (bbox->p2.x));
-	y2 = (int) ceil (surface->height - _cairo_fixed_to_double (bbox->p1.y));
+	x1 = floor (_cairo_fixed_to_double (bbox->p1.x));
+	y1 = floor (surface->height - _cairo_fixed_to_double (bbox->p2.y));
+	x2 = ceil (_cairo_fixed_to_double (bbox->p2.x));
+	y2 = ceil (surface->height - _cairo_fixed_to_double (bbox->p1.y));
     } else {
 	x1 = 0;
 	y1 = 0;
-	x2 = (int) ceil (surface->width);
-	y2 = (int) ceil (surface->height);
+	x2 = ceil (surface->width);
+	y2 = ceil (surface->height);
     }
 
     surface->page_bbox.x = x1;
