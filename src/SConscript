@@ -1,6 +1,8 @@
+# vim: ft=python expandtab
 import tempfile
 import re
 import subprocess
+import os
 
 Import('env')
 
