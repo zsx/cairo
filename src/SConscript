@@ -31,6 +31,8 @@ def generate_features_h(target, source, env):
     fo.close()
 
 env.Command('cairo-features.h', '#build/Makefile.win32.features', generate_features_h)
+env.Depends('cairo-features.h', 'SConscript')
+env.Alias('install', env.Install('$PREFIX/include/cairo', 'cairo-features.h'))
 
 cairo_headers = Split("cairo.h cairo-deprecated.h")
 cairo_sources =Split("\
