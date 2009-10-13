@@ -22,6 +22,12 @@
 #include "config.h"
 #endif
 
+/* The autoconf on OpenBSD 4.5 produces the malformed constant name
+ * SIZEOF_VOID__ rather than SIZEOF_VOID_P.  Work around that here. */
+#if !defined(SIZEOF_VOID_P) && defined(SIZEOF_VOID__)
+# define SIZEOF_VOID_P SIZEOF_VOID__
+#endif
+
 #include <dlfcn.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -481,7 +487,6 @@ _fini_trace (void)
 	}
     }
 
-    pthread_key_delete (counter_key);
     pthread_mutex_destroy (&Types.mutex);
 }
 
@@ -4744,28 +4749,6 @@ cairo_meta_surface_create (cairo_content_t content,
 	_get_object (SURFACE, ret)->defined = true;
 	_push_operand (SURFACE, ret);
 	_write_unlock ();
-    }
-
-    _exit_trace ();
-    return ret;
-}
-
-cairo_status_t
-cairo_meta_surface_replay (cairo_surface_t *meta, cairo_surface_t *target)
-{
-    cairo_status_t ret;
-
-    _enter_trace ();
-
-    ret = DLCALL (cairo_meta_surface_replay, meta, target);
-
-    _emit_line_info ();
-    if (_write_lock ()) {
-
-	_emit_surface (target);
-	_emit_surface (meta);
-	_trace_printf ("replay");
-	_consume_operand ();
     }
 
     _exit_trace ();

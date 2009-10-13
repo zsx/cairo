@@ -231,11 +231,10 @@ _pixman_format_from_masks (cairo_format_masks_t *masks,
      * expected. This avoid any problems from something bizarre like
      * alpha in the least-significant bits, or insane channel order,
      * or whatever. */
-     _pixman_format_to_masks (format, &format_masks);
-
-     if (masks->bpp        != format_masks.bpp        ||
-	 masks->red_mask   != format_masks.red_mask   ||
-	 masks->green_mask != format_masks.green_mask ||
+     if (!_pixman_format_to_masks (format, &format_masks) ||
+         masks->bpp        != format_masks.bpp            ||
+	 masks->red_mask   != format_masks.red_mask       ||
+	 masks->green_mask != format_masks.green_mask     ||
 	 masks->blue_mask  != format_masks.blue_mask)
      {
 	 return FALSE;
@@ -248,7 +247,7 @@ _pixman_format_from_masks (cairo_format_masks_t *masks,
 /* A mask consisting of N bits set to 1. */
 #define MASK(N) ((1UL << (N))-1)
 
-void
+cairo_bool_t
 _pixman_format_to_masks (pixman_format_code_t	 format,
 			 cairo_format_masks_t	*masks)
 {
@@ -268,27 +267,27 @@ _pixman_format_to_masks (pixman_format_code_t	 format,
         masks->red_mask   = MASK (r) << (g + b);
         masks->green_mask = MASK (g) << (b);
         masks->blue_mask  = MASK (b);
-        return;
+        return TRUE;
     case PIXMAN_TYPE_ABGR:
         masks->alpha_mask = MASK (a) << (b + g + r);
         masks->blue_mask  = MASK (b) << (g + r);
         masks->green_mask = MASK (g) << (r);
         masks->red_mask   = MASK (r);
-        return;
+        return TRUE;
 #ifdef PIXMAN_TYPE_BGRA
     case PIXMAN_TYPE_BGRA:
-        masks->blue_mask  = MASK (b) << (g + r + a);
-        masks->green_mask = MASK (g) << (r + a);
-        masks->red_mask   = MASK (r) << (a);
+        masks->blue_mask  = MASK (b) << (masks->bpp - b);
+        masks->green_mask = MASK (g) << (masks->bpp - b - g);
+        masks->red_mask   = MASK (r) << (masks->bpp - b - g - r);
         masks->alpha_mask = MASK (a);
-        return;
+        return TRUE;
 #endif
     case PIXMAN_TYPE_A:
         masks->alpha_mask = MASK (a);
         masks->red_mask   = 0;
         masks->green_mask = 0;
         masks->blue_mask  = 0;
-        return;
+        return TRUE;
     case PIXMAN_TYPE_OTHER:
     case PIXMAN_TYPE_COLOR:
     case PIXMAN_TYPE_GRAY:
@@ -299,7 +298,7 @@ _pixman_format_to_masks (pixman_format_code_t	 format,
         masks->red_mask   = 0;
         masks->green_mask = 0;
         masks->blue_mask  = 0;
-        return;
+        return FALSE;
     }
 }
 
@@ -388,11 +387,13 @@ _cairo_image_surface_create_with_pixman_format (unsigned char		*data,
 
     surface = _cairo_image_surface_create_for_pixman_image (pixman_image,
 							    pixman_format);
-    if (cairo_surface_status (surface))
+    if (unlikely (surface->status)) {
 	pixman_image_unref (pixman_image);
-    else
-	((cairo_image_surface_t *)surface)->is_clear = TRUE;
+	return surface;
+    }
 
+    /* we can not make any assumptions about the initial state of user data */
+    ((cairo_image_surface_t *) surface)->is_clear = data == NULL;
     return surface;
 }
 
@@ -562,9 +563,10 @@ cairo_image_surface_create_for_data (unsigned char     *data,
     }
 
     pixman_format = _cairo_format_to_pixman_format_code (format);
-
-    return _cairo_image_surface_create_with_pixman_format (data, pixman_format,
-							   width, height, stride);
+    return _cairo_image_surface_create_with_pixman_format (data,
+							   pixman_format,
+							   width, height,
+							   stride);
 }
 slim_hidden_def (cairo_image_surface_create_for_data);
 
@@ -1610,6 +1612,16 @@ _cairo_image_surface_get_font_options (void                  *abstract_surface,
     cairo_font_options_set_hint_metrics (options, CAIRO_HINT_METRICS_ON);
 }
 
+static cairo_status_t
+_cairo_image_surface_mark_dirty_rectangle (void *abstract_surface,
+					   int x, int y,
+					   int width, int height)
+{
+    cairo_image_surface_t *surface = abstract_surface;
+    surface->is_clear = FALSE;
+    return CAIRO_STATUS_SUCCESS;
+}
+
 static cairo_int_status_t
 _cairo_image_surface_paint (void *abstract_surface,
 			    cairo_operator_t	 op,
@@ -1663,7 +1675,7 @@ const cairo_surface_backend_t _cairo_image_surface_backend = {
     NULL, /* old_show_glyphs */
     _cairo_image_surface_get_font_options,
     NULL, /* flush */
-    NULL, /* mark_dirty_rectangle */
+    _cairo_image_surface_mark_dirty_rectangle,
     NULL, /* font_fini */
     NULL, /* glyph_fini */
 

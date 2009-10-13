@@ -37,10 +37,12 @@ AC_CHECK_LIB(z, compress,
 	 [have_libz="no (requires zlib http://www.gzip.org/zlib/)"])
 
 AC_CHECK_LIB(dl, dlsym,
-	     [AC_CHECK_HEADER(dlfcn.h, [
-	      have_dl=yes
-	      AC_DEFINE(HAVE_DL, 1, [Define to 1 if you have dl available])
-	     ], [have_dl=no])], [have_dl=no])
+	     [have_dlsym=yes; have_dl=yes],
+	     [have_dlsym=no; have_dl=no])
+if test "x$have_dlsym" = "xno"; then
+   AC_CHECK_FUNC(dlsym, [have_dlsym=yes], [have_dlsym=no])
+fi
+AC_CHECK_HEADERS(dlfcn.h, [have_dlsym=yes], [have_dlsym=no])
 AM_CONDITIONAL(CAIRO_HAS_DL, test "x$have_dl" = "xyes")
 
 dnl ===========================================================================
@@ -240,19 +242,28 @@ CAIRO_ENABLE_FUNCTIONS(png, PNG, yes, [
 ])
 
 dnl ===========================================================================
+use_glew="no (not required by any backend)"
 CAIRO_ENABLE_SURFACE_BACKEND(gl, OpenGL, no, [
   gl_REQUIRES="gl"
-  PKG_CHECK_MODULES(gl, $gl_REQUIRES, , [AC_MSG_RESULT(no)
-  use_gl="no (requires gl.pc)"])
+  PKG_CHECK_MODULES(gl, $gl_REQUIRES,, [
+	  dnl Fallback to searching for headers
+	  AC_CHECK_HEADER(GL/gl.h,, [use_gl="no (gl.pc nor OpenGL headers not found)"])
+	  if test "x$use_gl" = "xyes"; then
+	      gl_NONPKGCONFIG_CFLAGS=
+	      gl_NONPKGCONFIG_LIBS="-lGL"
+	  fi])
 
-  AC_CHECK_LIB(GLEW, glewInit, [
-    AC_CHECK_HEADER(GL/glew.h, [], [
-      use_gl="no (requires glew http://glew.sourceforge.net/)"
-    ])
-  ], [
-    use_gl="no (requires glew http://glew.sourceforge.net/)"
-  ])
-  gl_NONPKGCONFIG_LIBS="-lGLEW"
+  have_glew="no"
+  AC_CHECK_LIB(GLEW, glewInit,
+	       [AC_CHECK_HEADER(GL/glew.h, [have_glew="yes"], [])])
+  if test "x$have_glew" = "xyes"; then
+    gl_NONPKGCONFIG_LIBS="-lGLEW $gl_NONPKGCONFIG_LIBS"
+    use_glew="yes (system library)"
+  else
+    CAIRO_ENABLE_FUNCTIONS(glew, GLEW, always)
+    use_glew="yes (private copy)"
+    CAIRO_CFLAGS="$CAIRO_CFLAGS -I\$(top_srcdir)/src/glew"
+  fi
   need_glx_functions=yes
   need_eagle_functions=yes
 ])
@@ -357,9 +368,12 @@ CAIRO_ENABLE_FUNCTIONS(egl, EGL, auto, [
 
 CAIRO_ENABLE_FUNCTIONS(glx, GLX, auto, [
   if test "x$need_glx_functions" = "xyes"; then
+    save_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS $gl_CFLAGS $gl_NONPKGCONFIG_CFLAGS"
     AC_CHECK_HEADER(GL/glx.h,, [use_glx="no (GLX headers not found)"])
     glx_NONPKGCONFIG_CFLAGS=
     glx_NONPKGCONFIG_LIBS="-lGL"
+    CFLAGS="$save_CFLAGS"
   else
       use_glx="no (not required by any backend)"
   fi
@@ -647,7 +661,7 @@ esac
 CAIRO_ENABLE(trace, cairo-trace, auto, [
 	if test "x$have_ld_preload" != "xyes" -o \
 		"x$have_libz" != "xyes" -o \
-		"x$have_dl" != "xyes"; then
+		"x$have_dlsym" != "xyes"; then
 		use_trace="no (requires dynamic linker and zlib)"
 	fi
 ])
