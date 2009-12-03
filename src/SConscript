@@ -226,8 +226,10 @@ if CAIRO_HAS_FT_FONT:
     enabled_cairo_pkgconf += ['cairo-ft.pc']
 
 if CAIRO_HAS_FC_FONT:
+    '''
     enabled_cairo_headers += cairo_fc_headers
     enabled_cairo_sources += cairo_fc_sources
+    '''
     enabled_cairo_pkgconf += ['cairo-fc.pc']
 
 if CAIRO_HAS_PS_SURFACE:
@@ -342,6 +344,10 @@ env.Alias('install', env.Install('$PREFIX/include/cairo', enabled_cairo_headers)
 env.ParseConfig('pkg-config pixman-1 --cflags --libs')
 env.ParseConfig('pkg-config zlib --cflags --libs')
 env.ParseConfig('pkg-config libpng12 --cflags --libs')
+if CAIRO_HAS_FT_FONT:
+    env.ParseConfig('pkg-config freetype2 --cflags --libs')
+if CAIRO_HAS_FC_FONT:
+    env.ParseConfig('pkg-config fontconfig --cflags --libs')
 env.Append(LIBS = ['msimg32',  'gdi32', 'user32'])
 dll = env.SharedLibrary(['libcairo' + env['LIB_SUFFIX'] + '.dll', 'cairo.lib'], enabled_cairo_sources + ['cairo.def'])
 env.AddPostAction(dll, 'mt.exe -nologo -manifest ${TARGET}.manifest -outputresource:$TARGET;2')
