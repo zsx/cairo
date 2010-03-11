@@ -343,7 +343,7 @@ env.Alias('install', env.Install('$PREFIX/include/cairo', enabled_cairo_headers)
 
 env.ParseConfig('pkg-config pixman-1 --cflags --libs')
 env.ParseConfig('pkg-config zlib --cflags --libs')
-env.ParseConfig('pkg-config libpng12 --cflags --libs')
+env.ParseConfig('pkg-config png12 --cflags --libs')
 if CAIRO_HAS_FT_FONT:
     env.ParseConfig('pkg-config freetype2 --cflags --libs')
 if CAIRO_HAS_FC_FONT:
