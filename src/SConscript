@@ -175,20 +175,51 @@ enabled_cairo_headers = cairo_headers
 enabled_cairo_sources = cairo_sources
 enabled_cairo_pkgconf = ['cairo.pc']
 
+env_pkgconf_base = env.Clone(DOT_IN_SUBS = {'@VERSION@' : env['CAIRO_VERSION'],
+                                            '@prefix@' : env['PREFIX'],
+                                            '@exec_prefix@' : '${prefix}/bin', 
+                                            '@libdir@' : '${prefix}/lib', 
+                                            '@includedir@' : '${prefix}/include',
+                                            '@PKGCONFIGREQUIRES@': 'Requires',
+                                            '@FEATURE_BASE@' : '',
+                                            '@FEATURE_REQUIRES@': 'pixman-1 zlib',
+                                            '@CAIRO_NONPKGCONFIG_LIBS@': ''})
+
+env_pkgconf_base.DotIn('cairo.pc', 'cairo.pc.in')
+
+env_pkgconf = env_pkgconf_base.Clone()
+env_pkgconf['DOT_IN_SUBS']['@FEATURE_BASE@'] = 'cairo'
+env_pkgconf['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = ''
+
 if CAIRO_HAS_WIN32_SURFACE:
     enabled_cairo_headers += cairo_win32_headers
     enabled_cairo_sources += cairo_win32_sources
     enabled_cairo_pkgconf += ['cairo-win32.pc']
+    env_pkgconf_win32 = env_pkgconf.Clone()
+    env_pkgconf_win32['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-win32'
+    env_pkgconf_win32['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'Microsoft Windows surface backend'
+    env_pkgconf_win32['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = ''
+    env_pkgconf_win32.DotIn('cairo-win32.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_WIN32_FONT:
     enabled_cairo_headers += cairo_win32_font_headers
     enabled_cairo_sources += cairo_win32_font_sources
     enabled_cairo_pkgconf += ['cairo-win32-font.pc']
+    env_pkgconf_font = env_pkgconf.Clone()
+    env_pkgconf_font['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-win32-font'
+    env_pkgconf_font['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'Microsoft Windows font backend'
+    env_pkgconf_font['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = ''
+    env_pkgconf_font.DotIn('cairo-win32-font.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_PNG_FUNCTIONS:
     enabled_cairo_headers += cairo_png_headers
     enabled_cairo_sources += cairo_png_sources
     enabled_cairo_pkgconf += ['cairo-png.pc']
+    env_pkgconf_png = env_pkgconf.Clone()
+    env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-png'
+    env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'PNG functions'
+    env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'libpng12'
+    env_pkgconf_png.DotIn('cairo-png.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_GL_SURFACE:
     enabled_cairo_headers += cairo_gl_headers
@@ -224,28 +255,48 @@ if CAIRO_HAS_FT_FONT:
     enabled_cairo_headers += cairo_ft_headers
     enabled_cairo_sources += cairo_ft_sources
     enabled_cairo_pkgconf += ['cairo-ft.pc']
+    env_pkgconf_ft = env_pkgconf.Clone()
+    env_pkgconf_ft['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-ft'
+    env_pkgconf_ft['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'freetype font backend'
+    env_pkgconf_ft['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'freetype2 >= 9.7.3 fontconfig'
+    env_pkgconf_ft.DotIn('cairo-ft.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_FC_FONT:
     '''
     enabled_cairo_headers += cairo_fc_headers
     enabled_cairo_sources += cairo_fc_sources
-    '''
     enabled_cairo_pkgconf += ['cairo-fc.pc']
+    '''
 
 if CAIRO_HAS_PS_SURFACE:
     enabled_cairo_headers += cairo_ps_headers
     enabled_cairo_sources += cairo_ps_sources
     enabled_cairo_pkgconf += ['cairo-ps.pc']
+    env_pkgconf_ps = env_pkgconf.Clone()
+    env_pkgconf_ps['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-ps'
+    env_pkgconf_ps['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'PostScript surface backend'
+    env_pkgconf_ps['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'zlib'
+    env_pkgconf_ps.DotIn('cairo-ps.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_PDF_SURFACE:
     enabled_cairo_headers += cairo_pdf_headers
     enabled_cairo_sources += cairo_pdf_sources
     enabled_cairo_pkgconf += ['cairo-pdf.pc']
+    env_pkgconf_pdf = env_pkgconf.Clone()
+    env_pkgconf_pdf['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-PDF'
+    env_pkgconf_pdf['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'PDF surface backend'
+    env_pkgconf_pdf['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'zlib'
+    env_pkgconf_pdf.DotIn('cairo-pdf.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_SVG_SURFACE:
     enabled_cairo_headers += cairo_svg_headers
     enabled_cairo_sources += cairo_svg_sources
     enabled_cairo_pkgconf += ['cairo-svg.pc']
+    env_pkgconf_svg = env_pkgconf.Clone()
+    env_pkgconf_svg['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-svg'
+    env_pkgconf_svg['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'SVG surface backend'
+    env_pkgconf_svg['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = ''
+    env_pkgconf_svg.DotIn('cairo-svg.pc', 'cairo-features.pc.in')
 '''
 enabled_cairo_headers += cairo_image_headers
 enabled_cairo_sources += cairo_image_sources
@@ -309,35 +360,8 @@ env.Append(BUILDERS = {'CairoDefGenerator' : cairo_def_generator})
 env.CairoDefGenerator('cairo.def', enabled_cairo_headers)
 env.Depends('cairo.def', 'cairo-features.h')
 
-env['DOT_IN_SUBS'] = {'@VERSION@' : env['CAIRO_VERSION'],
-                      '@prefix@' : env['PREFIX'],
-                      '@exec_prefix@' : '${prefix}/bin', 
-                      '@libdir@' : '${prefix}/lib', 
-                      '@includedir@' : '${prefix}/include',
-                      '@PKGCONFIGREQUIRES': 'Requires',
-                      '@FEATURE_BASE@' : '',
-                      '@FEATURE_REQUIRES@': 'pixman-1 zlib',
-                      '@CAIRO_NONPKGCONFIG_LIBS@': ''}
-
-if CAIRO_HAS_PS_SURFACE:
-    env_pkgconf_ps = env.Clone()
-    env_pkgconf_ps['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-PS'
-    env_pkgconf_ps['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'cairo PS'
-    env_pkgconf_ps['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'zlib'
-    env_pkgconf_ps.DotIn('cairo-ps.pc', 'cairo-features.pc.in')
-    env_pkgconf_ps.Alias('install', env_pkgconf_ps.Install('$PREFIX/lib/pkgconfig', 'cairo-ps.pc'))
-
-if CAIRO_HAS_PDF_SURFACE:
-    env_pkgconf_pdf = env.Clone()
-    env_pkgconf_pdf['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-PDF'
-    env_pkgconf_pdf['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'cairo PDF'
-    env_pkgconf_pdf['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'zlib'
-    env_pkgconf_pdf.DotIn('cairo-pdf.pc', 'cairo-features.pc.in')
-    env_pkgconf_pdf.Alias('install', env_pkgconf_pdf.Install('$PREFIX/lib/pkgconfig', 'cairo-pdf.pc'))
-
-env.DotIn('cairo.pc', 'cairo.pc.in')
-
 env.Alias('install', env.Install('$PREFIX/lib/pkgconfig', ['cairo.pc']))
+env.Alias('install', env.Install('$PREFIX/lib/pkgconfig', enabled_cairo_pkgconf))
 
 env.Alias('install', env.Install('$PREFIX/include/cairo', enabled_cairo_headers))
 
@@ -353,3 +377,5 @@ dll = env.SharedLibrary(['libcairo' + env['LIB_SUFFIX'] + '.dll', 'cairo.lib'], 
 env.AddPostAction(dll, 'mt.exe -nologo -manifest ${TARGET}.manifest -outputresource:$TARGET;2')
 env.Alias('install', env.Install('$PREFIX/bin', 'libcairo' + env['LIB_SUFFIX'] + '.dll'))
 env.Alias('install', env.Install('$PREFIX/lib', 'cairo.lib'))
+if env['DEBUG']:
+    env.Alias('install', env.Install('$PREFIX/pdb', env['PDB']))
