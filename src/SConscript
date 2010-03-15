@@ -218,7 +218,7 @@ if CAIRO_HAS_PNG_FUNCTIONS:
     env_pkgconf_png = env_pkgconf.Clone()
     env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_PC@'] = 'cairo-png'
     env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_NAME@'] = 'PNG functions'
-    env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'libpng12'
+    env_pkgconf_png['DOT_IN_SUBS']['@FEATURE_REQUIRES@'] = 'png12'
     env_pkgconf_png.DotIn('cairo-png.pc', 'cairo-features.pc.in')
 
 if CAIRO_HAS_GL_SURFACE:
