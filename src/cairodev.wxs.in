@@ -1,0 +1,27 @@
+<?xml version='1.0'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+   <Module Id='LibcairoDev' Language='1033' Version='@VERSION@'>
+      <Package Id='3651e8b0-41cc-4040-9362-fc3a7db392ad' Description='Libcairo devlopement package'
+                Comments='This is a windows installer for libcairo library devlopment files'
+                Manufacturer='Gnome4Win' InstallerVersion='200' />
+ 
+      <Directory Id='TARGETDIR' Name='SourceDir'>
+		  <Directory Id='include' Name='include'>
+			  <Component Id='headers' Guid='aa6fe09a-88fd-4a76-a777-e15c05af4eea'>
+				  @HEADERS@
+			  </Component>
+		  </Directory>
+		  <Directory Id='lib' Name='lib'>
+			  <Component Id='libs' Guid='ab933a45-e2da-4eb6-b387-1693c83d1962'>
+				  @LIBS@
+			  </Component>
+			  <Directory Id='pkgconfig' Name='pkgconfig'>
+				  <Component Id='pcs' Guid='fe33ff20-241f-4598-abec-6df65554f3a0'>
+					  @PCS@
+				  </Component>
+			  </Directory>
+		  </Directory>
+                  @PDBS@
+      </Directory>
+   </Module>
+</Wix>
